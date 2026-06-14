@@ -42,7 +42,9 @@ DIZIONARIO_CAMPIONATI = {
     "Calcio. Norvegia. Eliteserien": "NOR",
     "Calcio. Polonia. Ekstraklasa": "POL",
     "Calcio. Romania. Liga I": "ROU",
-    "Calcio. Russia. Premier League": "RUS"
+    "Calcio. Russia. Premier League": "RUS",
+    "Calcio. Svizzera. Super League": "SWZ",
+    "Calcio. Belgio. Jupiler League": "B"
 }
 
 # --- MINI SERVER PER EVITARE IL FALLIMENTO DI RENDER ---
@@ -144,9 +146,7 @@ def scansione_partite():
         print(f"Errore durante lo screening live: {e}")
 
 if __name__ == "__main__":
-    # Avvia il finto server web in un thread separato
     Thread(target=finto_server, daemon=True).start()
-    
     print("Millenium Bot avviato e pronto a calcolare!")
     while True:
         scansione_partite()
