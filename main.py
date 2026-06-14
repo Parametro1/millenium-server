@@ -11,11 +11,9 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVZip?sports=1&count=50&lng=it"
 
 # =====================================================================
-# 🗺️ DIZIONARIO COMPLETO DI TRADUZIONE DEI CAMPIONATI
-# A sinistra il nome live di 1XBet, a destra il file di Football-Data su GitHub
+# DIZIONARIO COMPLETO DI TRADUZIONE DEI CAMPIONATI
 # =====================================================================
 DIZIONARIO_CAMPIONATI = {
-    # --- I BIG EUROPEI ---
     "Calcio. Italia. Serie A": "I1",
     "Calcio. Italia. Serie B": "I2",
     "Calcio. Inghilterra. Premier League": "E0",
@@ -27,8 +25,6 @@ DIZIONARIO_CAMPIONATI = {
     "Calcio. Francia. Ligue 1": "F1",
     "Calcio. Francia. Ligue 2": "F2",
     "Calcio. Olanda. Eredivisie": "N1",
-    
-    # --- GLI ALTRI CAMPIONATI ---
     "Calcio. Svezia. Superettan": "SWE2",
     "Calcio. Svezia. Allsvenskan": "SWE1",
     "Calcio. Turchia. SuperLig": "T1",
@@ -59,7 +55,6 @@ def invia_telegram(messaggio):
 def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
     file_standard = f"{nome_file_base}.csv"
     file_maiuscolo = f"{nome_file_base}.CSV"
-    
     nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
     
     if not os.path.exists(nome_file):
@@ -67,15 +62,12 @@ def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
         
     try:
         df = pd.read_csv(nome_file)
-        
-        # Pulizia per Football-Data: prende la prima parola (es. "Inter Milan" -> "inter")
         casa_clean = casa_live.split()[0].lower() if casa_live else ""
         ospite_clean = ospite_live.split()[0].lower() if ospite_live else ""
         
         df['Home_Clean'] = df['HomeTeam'].astype(str).str.lower()
         df['Away_Clean'] = df['AwayTeam'].astype(str).str.lower()
         
-        # Confronto parziale intelligente dei nomi
         match_casa = df[df['Home_Clean'].str.contains(casa_clean, na=False)]
         match_ospite = df[df['Away_Clean'].str.contains(ospite_clean, na=False)]
         
@@ -83,12 +75,10 @@ def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
         if totale_match == 0:
             return "📊 *Dati storici:* Squadre non trovate con l'algoritmo parziale."
             
-        # Calcolo Over 2.5 (Colonne standard Football-Data: FTHG e FTAG)
         over25_casa = len(match_casa[(match_casa['FTHG'] + match_casa['FTAG']) > 2])
         over25_ospite = len(match_ospite[(match_ospite['FTHG'] + match_ospite['FTAG']) > 2])
         perc_over25 = ((over25_casa + over25_ospite) / totale_match) * 100
         
-        # Calcolo Over 0.5 1° Tempo (Colonne standard Football-Data: HTHG e HTAG)
         over05_ht_casa = len(match_casa[(match_casa['HTHG'] + match_casa['HTAG']) > 0])
         over05_ht_ospite = len(match_ospite[(match_ospite['HTHG'] + match_ospite['HTAG']) > 0])
         perc_over05_ht = ((over05_ht_casa + over05_ht_ospite) / totale_match) * 100
@@ -109,14 +99,11 @@ def scansione_partite():
         
         for partita in partite:
             campionato_live = partita.get("League", "")
-            
             if campionato_live in DIZIONARIO_CAMPIONATI:
                 nome_file_csv = DIZIONARIO_CAMPIONATI[campionato_live]
-                
                 squadra_casa = partita.get("Opp1", "")
                 squadra_ospite = partita.get("Opp2", "")
                 
-                # Estrazione tiri in porta live
                 tiri_porta_casa = 0
                 tiri_porta_ospite = 0
                 stats = partita.get("Stat", {}).get("Period", [])
@@ -127,14 +114,8 @@ def scansione_partite():
                             tiri_porta_ospite = int(s.get("Sub2", 0))
                 
                 tiri_totali_live = tiri_porta_casa + tiri_porta_ospite
-                
-                # 🎯 FILTRO RIGOROSO MILLENIUM: Almeno 5 tiri in porta totali live
                 if tiri_totali_live >= 5:
-                    
-                    # Eseguiamo l'analisi con il nuovo sistema Football-Data
                     analisi_storica = analizza_archivio_storico(nome_file_csv, squadra_casa, squadra_ospite)
-                    
-                    # Costruzione messaggio Telegram
                     messaggio = (
                         f"🤖 *MILLENIUM BOT - SEGNALE VALUE BET*\n"
                         f"🏟️ *Partita:* {squadra_casa} - {squadra_ospite}\n"
@@ -144,10 +125,9 @@ def scansione_partite():
                         f"{analisi_storica}\n\n"
                         f"💰 *Verifica la quota sul tuo bookmaker!*"
                     )
-                    
                     invia_telegram(messaggio)
                     print(f"Segnale inviato con successo per: {squadra_casa} - {squadra_ospite}")
-                    time.sleep(5)  # Anti-spam
+                    time.sleep(5)
                     
     except Exception as e:
         print(f"Errore durante lo screening live: {e}")
@@ -156,4 +136,4 @@ if __name__ == "__main__":
     print("Millenium Bot avviato e pronto a calcolare!")
     while True:
         scansione_partite()
-        time.sleep(60)  # Controllo ogni minuto
+        time.sleep(60)
