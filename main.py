@@ -2,6 +2,7 @@ import os
 import time
 import requests
 import pandas as pd
+from threading import Thread
 
 # =====================================================================
 # CONFIGURAZIONI PRINCIPALI (Prese da Render)
@@ -43,6 +44,16 @@ DIZIONARIO_CAMPIONATI = {
     "Calcio. Romania. Liga I": "ROU",
     "Calcio. Russia. Premier League": "RUS"
 }
+
+# --- MINI SERVER PER EVITARE IL FALLIMENTO DI RENDER ---
+def finto_server():
+    from http.server import SimpleHTTPRequestHandler
+    from socketserver import TCPServer
+    class QuietHandler(SimpleHTTPRequestHandler):
+        def log_message(self, format, *args): return
+    port = int(os.environ.get("PORT", 10000))
+    with TCPServer(("", port), QuietHandler) as httpd:
+        httpd.serve_forever()
 
 def invia_telegram(messaggio):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -133,6 +144,9 @@ def scansione_partite():
         print(f"Errore durante lo screening live: {e}")
 
 if __name__ == "__main__":
+    # Avvia il finto server web in un thread separato
+    Thread(target=finto_server, daemon=True).start()
+    
     print("Millenium Bot avviato e pronto a calcolare!")
     while True:
         scansione_partite()
