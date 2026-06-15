@@ -47,7 +47,7 @@ def finto_server():
         pass
 
 # =======================================================
-# FUNZIONI INTERNE DEL BOT
+# FUNZIONI DEL BOT
 # =======================================================
 def invia_telegram(messaggio):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -58,7 +58,7 @@ def invia_telegram(messaggio):
         print(f"Errore invio Telegram: {e}")
 
 def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
-    # Logica originale per la gestione del formato estensione (Righe 68-71)
+    # La tua logica originale identica alle foto (Righe 68-71)
     file_standard = f"{nome_file_base}.csv"
     file_maiuscolo = f"{nome_file_base}.CSV"
     nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
@@ -67,23 +67,25 @@ def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
         if os.path.exists(nome_file):
             df = pd.read_csv(nome_file)
             
-            # Filtro delle squadre all'interno del file storico (.csv)
+            # Filtriamo i match storici delle due squadre nel file CSV
             partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
             partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
             
             output = f"📊 *Analisi Archivio ({nome_file}):*\n"
             
+            # Calcolo media gol fatti in casa
             if not partite_casa.empty and 'FTHG' in df.columns:
                 media_fatti_casa = partite_casa['FTHG'].mean()
                 output += f"🏠 {casa_live} (In Casa) Media Gol Fatti: *{media_fatti_casa:.2f}*\n"
             else:
-                output += f"🏠 Dati storici in casa per {casa_live} non sufficienti.\n"
+                output += f"🏠 Dati storici in casa per {casa_live} insufficienti.\n"
                 
+            # Calcolo media gol fatti in trasferta
             if not partite_ospite.empty and 'FTAG' in df.columns:
                 media_fatti_ospite = partite_ospite['FTAG'].mean()
                 output += f"🚀 {ospite_live} (Fuori Casa) Media Gol Fatti: *{media_fatti_ospite:.2f}*"
             else:
-                output += f"🚀 Dati storici fuori casa per {ospite_live} non sufficienti."
+                output += f"🚀 Dati storici fuori casa per {ospite_live} insufficienti."
                 
             return output
         else:
@@ -92,7 +94,7 @@ def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
         return f"⚠️ *Errore calcolo archivio:* {str(e)}"
 
 # =======================================================
-# FUNZIONE PRINCIPALE DI SCANSIONE MATCH
+# FUNZIONE PRINCIPALE DI SCANSIONE LIVE
 # =======================================================
 def scansione_partite():
     print("Scansione partite live in corso...")
@@ -145,7 +147,7 @@ def scansione_partite():
         print(f"Errore durante lo screening live: {e}")
 
 # =======================================================
-# BLOCCO DI AVVIO DEL PROCESSO
+# BLOCCO DI AVVIO REALE DEL PROCESSO
 # =======================================================
 if __name__ == "__main__":
     # Avvia il finto server web in un thread separato per Render
