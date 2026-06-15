@@ -1,6 +1,5 @@
 from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
-import threading
 import os
 import time
 import requests
@@ -55,32 +54,32 @@ def invia_telegram(messaggio):
     try:
         requests.post(url, json=payload)
     except Exception as e:
-        print(f"Errore invio Telegram: {e}")
+        print(f"Errore invio Telegram: {e}", flush=True)
 
-def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
+def analizza_archivio_storico(nome_file_csv, casa_live, ospite_live):
     # La tua logica originale identica alle foto (Righe 68-71)
-    file_standard = f"{nome_file_base}.csv"
-    file_maiuscolo = f"{nome_file_base}.CSV"
+    file_standard = f"{nome_file_csv}.csv"
+    file_maiuscolo = f"{nome_file_csv}.CSV"
     nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
     
     try:
         if os.path.exists(nome_file):
             df = pd.read_csv(nome_file)
             
-            # Filtriamo i match storici delle due squadre nel file CSV
+            # Filtriamo i match storici usando la corrispondenza delle stringhe
             partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
             partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
             
             output = f"📊 *Analisi Archivio ({nome_file}):*\n"
             
-            # Calcolo media gol fatti in casa
+            # Calcolo media gol fatti in casa (FTHG)
             if not partite_casa.empty and 'FTHG' in df.columns:
                 media_fatti_casa = partite_casa['FTHG'].mean()
                 output += f"🏠 {casa_live} (In Casa) Media Gol Fatti: *{media_fatti_casa:.2f}*\n"
             else:
                 output += f"🏠 Dati storici in casa per {casa_live} insufficienti.\n"
                 
-            # Calcolo media gol fatti in trasferta
+            # Calcolo media gol fatti in trasferta (FTAG)
             if not partite_ospite.empty and 'FTAG' in df.columns:
                 media_fatti_ospite = partite_ospite['FTAG'].mean()
                 output += f"🚀 {ospite_live} (Fuori Casa) Media Gol Fatti: *{media_fatti_ospite:.2f}*"
@@ -97,7 +96,7 @@ def analizza_archivio_storico(nome_file_base, casa_live, ospite_live):
 # FUNZIONE PRINCIPALE DI SCANSIONE LIVE
 # =======================================================
 def scansione_partite():
-    print("Scansione partite live in corso...")
+    print("Scansione partite live in corso...", flush=True)
     try:
         response = requests.get(URL_LIVE, timeout=10)
         if response.status_code == 200:
@@ -110,7 +109,7 @@ def scansione_partite():
                 squadra_ospite = partita.get("O2", "")
                 
                 if campionato_live in DIZIONARIO_CAMPIONATI:
-                    nome_file_base = DIZIONARIO_CAMPIONATI[campionato_live]
+                    nome_file_csv = DIZIONARIO_CAMPIONATI[campionato_live]
                     
                     # Recupero dati dei tiri live dalle statistiche di 1xbet
                     stats = partita.get("SC", {}).get("S", [])
@@ -127,7 +126,7 @@ def scansione_partite():
                     
                     # Se ci sono almeno 5 tiri totali, scatta l'allerta con l'analisi!
                     if tiri_totali_live >= 5:
-                        analisi_storica = analizza_archivio_storico(nome_file_base, squadra_casa, squadra_ospite)
+                        analisi_storica = analizza_archivio_storico(nome_file_csv, squadra_casa, squadra_ospite)
                         
                         messaggio = (
                             f"*MILLENIUM BOT - SEGNALE VALUE BET*\n\n"
@@ -140,11 +139,11 @@ def scansione_partite():
                         )
                         
                         invia_telegram(messaggio)
-                        print(f"Segnale inviato su Telegram per: {squadra_casa} - {squadra_ospite}")
+                        print(f"Segnale inviato su Telegram per: {squadra_casa} - {squadra_ospite}", flush=True)
                         time.sleep(5)
                         
     except Exception as e:
-        print(f"Errore durante lo screening live: {e}")
+        print(f"Errore durante lo screening live: {e}", flush=True)
 
 # =======================================================
 # BLOCCO DI AVVIO REALE DEL PROCESSO
@@ -153,7 +152,7 @@ if __name__ == "__main__":
     # Avvia il finto server web in un thread separato per Render
     Thread(target=finto_server, daemon=True).start()
     
-    print("Millenium Bot avviato e pronto a calcolare!")
+    print("Millenium Bot avviato e pronto a calcolare!", flush=True)
     
     while True:
         scansione_partite()
