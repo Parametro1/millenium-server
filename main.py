@@ -1,3 +1,6 @@
+from http.server import SimpleHTTPRequestHandler
+from socketserver import TCPServer
+import threading
 import os
 import time
 import requests
@@ -10,7 +13,14 @@ from threading import Thread
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVZip?sports=1&count=50&lng=it"
+def finto_server():
+    class QuietHandler(SimpleHTTPRequestHandler):
+        def log_message(self, format, *args): return
+    porta = int(os.environ.get("PORT", 10000))
+    with TCPServer(("0.0.0.0", porta), QuietHandler) as server:
+        server.serve_forever()
 
+Thread(target=finto_server, daemon=True).start()
 # =====================================================================
 # DIZIONARIO COMPLETO DI TRADUZIONE DEI CAMPIONATI
 # =====================================================================
