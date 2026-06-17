@@ -388,4 +388,4 @@ if __name__ == "__main__":
     while True:
         scansione_partite_live()
         scansione_prematch()
-        time.sleep(10)
+        time.sleep(60)
