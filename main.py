@@ -11,11 +11,10 @@ from threading import Thread
 # ==========================================
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=200&lng=it&mode=4"
-URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=200&lng=it&mode=4"
+URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
+URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 
-
-
+# Memoria globale per la dashboard del PC
 DASHBOARD_DATA = {
     "ultimo_aggiornamento": "Mai",
     "partite_scansionate": 0,
@@ -23,6 +22,9 @@ DASHBOARD_DATA = {
     "match_futuri": []
 }
 
+# =======================================================
+# DIZIONARIO COMPLETO DI TRADUZIONE DEI CAMPIONATI
+# =======================================================
 DIZIONARIO_CAMPIONATI = {
     "Calcio. Italia. Serie A": "I1",
     "Calcio. Italia. Serie B": "I2",
@@ -40,7 +42,7 @@ DIZIONARIO_CAMPIONATI = {
 }
 
 # =======================================================
-# DASHBOARD WEB GRAFICA AGGIORNATA
+# VERA DASHBOARD WEB PER MONITORAGGIO SU PC
 # =======================================================
 class DashboardHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args): 
@@ -52,27 +54,26 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
+            # 1. Costruzione tabella LIVE
             righe_live = ""
             if not DASHBOARD_DATA["match_rilevanti"]:
-                righe_live = "<tr><td colspan='6' style='text-align:center; color:#8b949e;'>Nessun match live nei campionati registrati.</td></tr>"
+                righe_live = "<tr><td colspan='5' style='text-align:center; color:#8b949e;'>Nessun match live con tiri significativi rilevato.</td></tr>"
             else:
                 for m in DASHBOARD_DATA["match_rilevanti"]:
-                    # Colore dinamico per l'indice di pressione
-                    p_color = "#56d364" if m['ppm'] >= 70 else ("#e3b341" if m['ppm'] >= 45 else "#8b949e")
                     righe_live += f"""
                     <tr>
                         <td><b>{m['orario']}</b></td>
                         <td style='color:#58a6ff;'><b>{m['partita']}</b><br><small style='color:#ffa198;'>Risultato: {m['punteggio']}</small></td>
                         <td><span style='background:#21262d; padding:2px 6px; border-radius:4px;'>{m['campionato']}</span></td>
-                        <td>{m['stats_visive']}</td>
-                        <td style='color:{p_color}; font-weight:bold; font-size:16px; text-align:center;'>{m['ppm']}%</td>
+                        <td style='color:#56d364; font-weight:bold;'>{m['tiri']}</td>
                         <td style='font-size:12px; white-space:pre-line;'>{m['analisi']}</td>
                     </tr>
                     """
 
+            # 2. Costruzione tabella MATCH FUTURI
             righe_future = ""
             if not DASHBOARD_DATA["match_futuri"]:
-                righe_future = "<tr><td colspan='4' style='text-align:center; color:#8b949e;'>Nessun match in programma nelle prossime ore.</td></tr>"
+                righe_future = "<tr><td colspan='4' style='text-align:center; color:#8b949e;'>Nessun match in programma nelle prossime ore per i campionati in archivio.</td></tr>"
             else:
                 for mf in DASHBOARD_DATA["match_futuri"]:
                     righe_future += f"""
@@ -88,11 +89,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Millenium Bot - Intelligence Radar</title>
+                <title>Millenium Bot - Monitor Avanzato</title>
                 <meta http-equiv="refresh" content="30">
                 <style>
                     body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; margin:0; padding:20px; }}
-                    .container {{ max-width: 1300px; margin: 0 auto; }}
+                    .container {{ max-width: 1200px; margin: 0 auto; }}
                     .header {{ background: linear-gradient(135deg, #1f2937, #111827); padding: 20px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 25px; }}
                     h1 {{ color: #58a6ff; margin: 0 0 10px 0; font-size: 24px; }}
                     .status-bar {{ display: flex; gap: 20px; font-size: 14px; color: #8b949e; }}
@@ -109,7 +110,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🖥️ Centro Analisi Avanzato - Millenium Intelligence</h1>
+                        <h1>🖥️ Centro Controllo Millenium Bot</h1>
                         <div class="status-bar">
                             <span>Radar: <span class="badge badge-online">🟢 ONLINE</span></span>
                             <span>Match nel Palinsesto Live: <span class="badge">{DASHBOARD_DATA["partite_scansionate"]}</span></span>
@@ -117,16 +118,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         </div>
                     </div>
                     
-                    <h2>🔥 1. Live Tracker (Incrocio Statistiche Real-Time + Indice Pressione)</h2>
+                    <h2>🔥 1. Partite in Corso (LIVE con analisi andamento e minuto)</h2>
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 8%;">Minuto</th>
-                                <th style="width: 22%;">Partita / Risultato</th>
-                                <th style="width: 20%;">Campionato</th>
-                                <th style="width: 20%;">Dati (Porta - Fuori - Angoli)</th>
-                                <th style="width: 10%; text-align:center;">Pressione PPM</th>
-                                <th style="width: 20%;">Strategia di Quota Consigliata</th>
+                                <th style="width: 10%;">Minuto</th>
+                                <th style="width: 25%;">Partita / Risultato</th>
+                                <th style="width: 25%;">Campionato</th>
+                                <th style="width: 15%;">Tiri in Porta</th>
+                                <th style="width: 25%;">Analisi Dinamica Live</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -134,7 +134,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         </tbody>
                     </table>
 
-                    <h2 class="future-title">📅 2. Palinsesto Pre-Match (Studio Preventivo Database)</h2>
+                    <h2 class="future-title">📅 2. Palinsesto Prossime Ore (Pre-Match con studio automatico)</h2>
                     <table>
                         <thead>
                             <tr>
@@ -165,35 +165,9 @@ def finto_server():
         pass
 
 # =======================================================
-# CALCOLO INDICE DI PRESSIONE MILLENIUM (PPM)
+# LOGICHE DI ANALISI AVANZATA (STORICO + TEMPO + LIVE)
 # =======================================================
-def calcola_ppm(t_porta, t_fuori, corner, att_pericolosi, minuto):
-    if minuto <= 0: minuto = 1
-    
-    # 1. Punteggio tiri (Max 35 punti)
-    tiri_totali = t_porta + t_fuori
-    punti_tiri = min(tiri_totali * 3, 35)
-    
-    # 2. Punteggio calci d'angolo (Max 25 punti)
-    punti_corner = min(corner * 4, 25)
-    
-    # 3. Punteggio Attacchi Pericolosi al minuto (Max 40 punti)
-    ap_al_minuto = att_pericolosi / minuto
-    if ap_al_minuto >= 1.3:
-        punti_ap = 40
-    elif ap_al_minuto >= 0.9:
-        punti_ap = 28
-    elif ap_al_minuto >= 0.5:
-        punti_ap = 15
-    else:
-        punti_ap = 5
-        
-    return int(punti_tiri + punti_corner + punti_ap)
-
-# =======================================================
-# LOGICHE DI ANALISI ED ESTRAZIONE PREVISIONALE
-# =======================================================
-def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False, ppm=0):
+def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
     file_standard = f"{nome_file_csv}.csv"
     file_maiuscolo = f"{nome_file_csv}.CSV"
     nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
@@ -203,7 +177,8 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
             partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
             partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
             
-            media_casa, media_fuori = 0.0, 0.0
+            media_casa = 0.0
+            media_fuori = 0.0
             output = ""
             
             if not partite_casa.empty and 'FTHG' in df.columns:
@@ -215,32 +190,37 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
             
             somma_medie = media_casa + media_fuori
             
+            # SEZIONE 1: LOGICA DINAMICA PER PARTITE IN CORSO (LIVE)
             if is_live and minuto is not None:
-                if somma_medie >= 2.40 and ppm >= 55:
+                output += f"⏱️ Analisi al minuto {minuto}' (Punteggio con {gol_totali} Gol):\n"
+                
+                if somma_medie >= 2.40:
                     if minuto <= 35:
-                        output += "💰 <b>CONSIGLIO: OVER 0.5 HT (Quota target > 1.75)</b>"
-                    elif minuto > 35 and minuto <= 68:
-                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 1.5} LIVE (Quota target > 1.85)</b>"
-                    elif minuto > 68 and minuto <= 83:
-                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 0.5} FINALE (Forcing in corso)</b>"
+                        output += "💰 <b>CONSIGLIO: OVER 0.5 HT (Entra se quota > 1.70)</b>"
+                    elif minuto > 35 and minuto <= 65:
+                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 1.5} LIVE (Entra se quota > 1.80)</b>"
+                    elif minuto > 65 and minuto <= 82:
+                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 0.5} FINALE (Pressione ultimi minuti)</b>"
                     else:
-                        output += "⚠️ <i>CONSIGLIO: No Bet (Tempo scaduto)</i>"
-                elif ppm < 55:
-                    output += "⚠️ <i>CONSIGLIO: No Bet (Pressione troppo bassa)</i>"
+                        output += "⚠️ <i>CONSIGLIO: No Bet (Troppo tardi)</i>"
                 else:
-                    output += "⚠️ <i>CONSIGLIO: No Bet (Storico sfavorevole)</i>"
+                    output += "⚠️ <i>CONSIGLIO: No Bet (Storico debole per gol live)</i>"
+            
+            # SEZIONE 2: LOGICA PER PARTITE FUTURE (PRE-MATCH)
             else:
                 if somma_medie >= 3.20:
                     output += "💰 <b>STUDIO: Forte pendenza OVER 2.5</b>"
                 elif somma_medie >= 2.40:
                     output += "💰 <b>STUDIO: Ottimo per OVER 1.5 Pre-Match</b>"
-                else:
+                elif somma_medie > 0:
                     output += "⚠️ <i>STUDIO: Match da Under o No Bet</i>"
+                else:
+                    output = "Dati storici insufficienti."
                 
             return output
         return "File archivio non trovato."
     except Exception:
-        return "Errore calcolo."
+        return "Errore calcolo medie."
 
 def scansione_prematch():
     try:
@@ -256,7 +236,7 @@ def scansione_prematch():
                 squadra_ospite = partita.get("O2", "")
                 timestamp_inizio = partita.get("S", 0)
                 
-                if campeonato in DIZIONARIO_CAMPIONATI and timestamp_inizio > 0:
+                if campionato in DIZIONARIO_CAMPIONATI and timestamp_inizio > 0:
                     nome_file_csv = DIZIONARIO_CAMPIONATI[campionato]
                     ora_inizio = time.strftime('%d/%m %H:%M', time.localtime(timestamp_inizio))
                     consiglio_match = analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
@@ -264,12 +244,12 @@ def scansione_prematch():
                     prossimi_match.append({
                         "data_ora": ora_inizio,
                         "partita": f"{squadra_casa} - {squadra_ospite}",
-                        "campionato": campeonato,
+                        "campionato": campionato,
                         "analisi": consiglio_match
                     })
             DASHBOARD_DATA["match_futuri"] = prossimi_match[:15]
     except Exception as e:
-        print(f"Errore prematch: {e}", flush=True)
+        print(f"Errore scansione prematch: {e}", flush=True)
 
 def scansione_partite_live():
     try:
@@ -298,94 +278,66 @@ def scansione_partite_live():
                     totale_gol_attuali = gol_casa + gol_ospite
                     stringa_punteggio = f"{gol_casa} - {gol_ospite}"
                     
-                    # ESTRAZIONE DALL'API DI TUTTE LE METRICHE AVANZATE
                     stats = sc_data.get("S", [])
-                    t_porta_c, t_porta_o = 0, 0
-                    t_fuori_c, t_fuori_o = 0, 0
-                    corner_c, corner_o = 0, 0
-                    att_per_c, att_per_o = 0, 0
-                    
+                    tiri_porta_casa = 0
+                    tiri_porta_ospite = 0
                     for stat in stats:
-                        tipo = stat.get("T")
-                        if tipo == 2:  # Tiri in Porta
-                            t_porta_c, t_porta_o = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                        elif tipo == 3: # Tiri Fuori Specchio
-                            t_fuori_c, t_fuori_o = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                        elif tipo == 4: # Calci d'Angolo
-                            corner_c, corner_o = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                        elif tipo == 11: # Attacchi Pericolosi
-                            att_per_c, att_per_o = int(stat.get("G1", 0)), int(stat.get("G2", 0))
+                        if stat.get("T") == 2:
+                            tiri_porta_casa = int(stat.get("G1", 0))
+                            tiri_porta_ospite = int(stat.get("G2", 0))
+                            break
+                    tiri_totali_live = tiri_porta_casa + tiri_porta_ospite
                     
-                    tiri_porta_tot = t_porta_c + t_porta_o
-                    tiri_fuori_tot = t_fuori_c + t_fuori_o
-                    corner_tot = corner_c + corner_o
-                    att_per_tot = att_per_c + att_per_o
-                    
-                    # Calcolo del Punteggio di Pressione Combinato
-                    indice_ppm = calcola_ppm(tiri_porta_tot, tiri_fuori_tot, corner_tot, att_per_tot, minuto_corrente)
-                    
-                    if tiri_porta_tot > 0 or corner_tot > 0:
+                    if tiri_totali_live > 0:
                         consiglio_live = analizza_e_consiglia(
                             nome_file_csv, squadra_casa, squadra_ospite, 
-                            minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True, ppm=indice_ppm
+                            minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True
                         )
-                        
-                        stringa_stats_visive = (
-                            f"🎯 In Porta: <b>{tiri_porta_tot}</b> ({t_porta_c}-{t_porta_o})<br>"
-                            f"🥅 Fuori: {tiri_fuori_tot} ({t_fuori_c}-{t_fuori_o})<br>"
-                            f"🚩 Angoli: <b>{corner_tot}</b> ({corner_c}-{corner_o})"
-                        )
-                        
                         nuovi_match_rilevanti.append({
                             "orario": f"{minuto_corrente}'",
                             "partita": f"{squadra_casa} - {squadra_ospite}",
                             "punteggio": stringa_punteggio,
                             "campionato": campionato_live,
-                            "stats_visive": stringa_stats_visive,
-                            "ppm": indice_ppm,
+                            "tiri": f"{tiri_totali_live} ({tiri_porta_casa}-{tiri_porta_ospite})",
                             "analisi": consiglio_live
                         })
                     
-                    # CRITERIO SCATTO TELEGRAM: Almeno 5 tiri in porta E pressione reale >= 65%
-                    if tiri_porta_tot >= 5 and indice_ppm >= 65:
+                    if tiri_totali_live >= 5:
                         consiglio_telegram = analizza_e_consiglia(
                             nome_file_csv, squadra_casa, squadra_ospite, 
-                            minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True, ppm=indice_ppm
+                            minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True
                         )
                         consiglio_text = consiglio_telegram.replace("<b>", "*").replace("</b>", "*").replace("<i>", "_").replace("</i>", "_")
                         
                         messaggio = (
-                            f"🔥 *MILLENIUM INTELLIGENCE - GOL NELL'ARIA* 🔥\n\n"
+                            f"*MILLENIUM BOT - COPERTURA LIVE VALUTATA*\n\n"
                             f"⚽ *Match:* {squadra_casa} - {squadra_ospite} ({stringa_punteggio})\n"
-                            f"⏱️ *Minuto:* {minuto_corrente}' | 🏆 *Torneo:* {campionato_live}\n\n"
-                            f"📊 *INDICE PRESSIONE PPM: {indice_ppm}%* 📊\n"
-                            f"🎯 Tiri in Porta: {tiri_porta_tot} ({t_porta_c}-{t_porta_o})\n"
-                            f"🥅 Tiri Fuori Specchio: {tiri_fuori_tot}\n"
-                            f"🚩 Calci d'Angolo Totali: {corner_tot}\n"
-                            f"⚡ Attacchi Pericolosi: {att_per_tot} ({int(att_per_tot/minuto_corrente)}/min)\n\n"
-                            f"📈 *ANALISI REALE DI COPERTURA:*\n{consiglio_text}\n\n"
-                            f"🍀 _L'algoritmo rileva un assedio. Valuta l'ingresso sul mercato!_"
+                            f"🏆 *Torneo:* {campionato_live}\n"
+                            f"⏱️ *Minuto di Gioco:* {minuto_corrente}' minuto\n\n"
+                            f"🎯 *STATISTICHE LIVE:* Tiri totali {tiri_totali_live} ({tiri_porta_casa}-{tiri_porta_ospite})\n\n"
+                            f"📊 *STUDIO DINAMICO PROGETTATO:*\n{consiglio_text}\n\n"
+                            f"🍀 _Attendi che la quota di mercato tocchi il valore consigliato sul tuo bookmaker prima di piazzare!_"
                         )
                         invia_telegram(messaggio)
                         time.sleep(5)
-            DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
+            DASHBOARD_DATA["match_rilevanti"] = nuevos_match_rilevanti
     except Exception as e:
-        print(f"Errore live avanzato: {e}", flush=True)
+        print(f"Errore live: {e}", flush=True)
 
 def invia_telegram(messaggio):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "Markdown"}
+    payload = {"chat_id": CHAT_ID, "text": mensaje, "parse_mode": "Markdown"}
     try:
         requests.post(url, json=payload)
     except Exception:
         pass
 
 # =======================================================
-# AVVIO SISTEMA
+# LOOP DI AVVIO REALE
 # =======================================================
 if __name__ == "__main__":
     Thread(target=finto_server, daemon=True).start()
-    print("Millenium Intelligence Attivo con Indice PPM!", flush=True)
+    print("Millenium Bot attivo! Monitor Live (con Minuti e Gol) + Pre-Match pronto.", flush=True)
     
     while True:
         scansione_partite_live()
