@@ -11,8 +11,8 @@ from threading import Thread
 # ==========================================
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
-URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
+URL_LIVE = "https://pub.feedinco.com/betting/liveMatches.json"
+URL_FUTURE = "https://pub.feedinco.com/betting/upcomingMatches.json"
 
 DASHBOARD_DATA = {
     "ultimo_aggiornamento": "Mai",
