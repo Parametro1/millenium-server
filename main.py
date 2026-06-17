@@ -12,7 +12,7 @@ from threading import Thread
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=200&lng=it&mode=4"
-URL_PREMATCH = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=200&lng=it&mode=4"
+URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=200&lng=it&mode=4"
 
 
 
