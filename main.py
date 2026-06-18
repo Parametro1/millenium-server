@@ -47,7 +47,7 @@ DIZIONARIO_CAMPIONATI = {
     "Calcio. Francia. Ligue 2": "F2", "Calcio. Turchia. SuperLig": "T1", "Calcio. USA. MLS": "USA"
 }
 
-CAMPIONATI_ALL = ["E0", "D2", "E1", "I2", "SP1", "I1", "N1", "F2", "T1", "USA", "F1", "D1", "SP2"]
+CAMPIONATI_ALL = ["E0", "E1", "D1", "D2", "I1", "I2", "N1", "SP1", "SP2", "F1", "F2", "T1", "USA"]
 
 def salva_dati_su_file():
     try:
@@ -69,9 +69,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
+            
             badge_campionati = "".join([f"<span class='db-league-badge'>{sigla}</span>" for sigla in CAMPIONATI_ALL])
             
-            # Genera le date dei prossimi 7 giorni per il frontend
+            righe_campionati_html = ""
+            for nome_esteso, sigla in DIZIONARIO_CAMPIONATI.items():
+                righe_campionati_html += f"<tr><td style='color:#388bfd; font-weight:900;'>{sigla}</td><td style='color:#cbd5e1; font-weight:600;'>{nome_esteso}</td></tr>"
+
             giorni_list = []
             nomi_giorni = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"]
             oggi = datetime.now()
@@ -111,30 +115,32 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .badge-container {{ display: flex; gap: 6px; flex-wrap: wrap; }}
                     .db-league-badge {{ background: #1f3a6d; color: #ffffff; font-weight: 900; font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 1px solid #388bfd; }}
 
-                    /* CALENDARIO ULTRA COLORATO */
+                    /* CALENDARIO MODIFICATO CON SCRITTE GIALLO OCRA */
                     .calendar-section {{ background: #091124; border: 2px solid #16264c; padding: 20px; border-radius: 12px; margin-bottom: 25px; }}
-                    .calendar-title {{ font-size: 14px; font-weight: 800; text-transform: uppercase; color: #ffd166; margin-bottom: 15px; letter-spacing: 0.5px; }}
+                    .calendar-title {{ font-size: 14px; font-weight: 800; text-transform: uppercase; color: #daa520; margin-bottom: 15px; letter-spacing: 0.5px; }}
                     .calendar-grid {{ display: flex; gap: 12px; flex-wrap: wrap; }}
-                    .cal-btn {{ flex: 1; min-width: 130px; padding: 14px 10px; border-radius: 8px; border: 2px solid #222; background: #111; color: #fff; text-align: center; cursor: pointer; font-weight: 800; transition: all 0.2s ease; }}
-                    .cal-btn .cal-sub {{ font-size: 11px; font-weight: 600; opacity: 0.7; margin-top: 4px; display: block; }}
                     
-                    /* Stati cromatici pulsanti */
-                    .cal-btn.cal-selected {{ background: #e0a904 !important; color: #000 !important; border-color: #ffea00 !important; box-shadow: 0 0 15px #e0a904; }}
-                    .cal-btn.cal-selected .cal-sub {{ color: #000; opacity: 0.9; font-weight: 700; }}
-                    .cal-btn.cal-hot {{ background: #4c1d95; color: #fff; border-color: #c084fc; }} /* Giorno caldo Viola */
-                    .cal-btn.cal-normal {{ background: #064e3b; color: #fff; border-color: #34d399; }} /* Giorno medio Verde */
-                    .cal-btn.cal-empty {{ background: #2d0c0c; color: #991b1b; border-color: #7f1d1d; cursor: not-allowed; }} /* No Bet Rosso Scuro */
+                    .cal-btn {{ flex: 1; min-width: 130px; padding: 14px 10px; border-radius: 8px; border: 2px solid #222; background: #111; color: #daa520 !important; text-align: center; cursor: pointer; font-weight: 800; transition: all 0.2s ease; }}
+                    .cal-btn .cal-sub {{ font-size: 11px; font-weight: 700; color: #daa520 !important; opacity: 0.85; margin-top: 4px; display: block; }}
+                    
+                    /* Gli sfondi rimangono identici, ma applichiamo il colore giallo ocra forzato ai testi */
+                    .cal-btn.cal-selected {{ background: #e0a904 !important; color: #daa520 !important; border-color: #ffea00 !important; box-shadow: 0 0 15px #e0a904; }}
+                    .cal-btn.cal-hot {{ background: #4c1d95; border-color: #c084fc; }}
+                    .cal-btn.cal-normal {{ background: #064e3b; border-color: #34d399; }}
+                    .cal-btn.cal-empty {{ background: #2d0c0c; border-color: #7f1d1d; cursor: not-allowed; }}
 
-                    .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
+                    .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }}
                     @media (max-width: 1300px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
                     
                     .panel {{ background: #0a1122; border-radius: 12px; padding: 22px; transition: all 0.3s; }}
                     .panel-live {{ border: 2px solid #7a1c1c; box-shadow: 0 0 15px rgba(122,28,28,0.2); }}
                     .panel-future {{ border: 2px solid #b38600; box-shadow: 0 0 15px rgba(179,134,0,0.2); }}
+                    .panel-leagues {{ border: 2px solid #1e366a; background: #060d1a; }}
                     
                     h2 {{ font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #222; }}
                     .live-title {{ color: #ff5252; text-shadow: 0 0 8px rgba(255,82,82,0.3); }}
                     .future-title {{ color: #ffc107; text-shadow: 0 0 8px rgba(255,193,7,0.3); }}
+                    .leagues-title {{ color: #388bfd; text-shadow: 0 0 8px rgba(56,139,253,0.3); }}
                     
                     table {{ width: 100%; border-collapse: separate; border-spacing: 0; }}
                     th {{ background-color: #0f192f; color: #8bc2ff; text-align: left; padding: 14px 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; border-bottom: 3px solid #1e366a; }}
@@ -169,12 +175,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     <div class="controls-panel">
                         <input type="text" id="searchBar" class="search-box" placeholder="🔍 Filtra squadre o campionati..." onkeyup="filterTables()">
                         <div class="db-info">
-                            <span class="db-title">🗄️ Database:</span>
+                            <span class="db-title">🗄️ Database Caricati:</span>
                             <div class="badge-container">{badge_campionati}</div>
                         </div>
                     </div>
 
-                    <!-- SEZIONE CALENDARIO VISIVO -->
                     <div class="calendar-section">
                         <div class="calendar-title">📅 CALENDARIO SETTIMANALE (Clicca un giorno per filtrare lo Studio Preventivo)</div>
                         <div class="calendar-grid" id="calendarContainer"></div>
@@ -214,11 +219,27 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             </table>
                         </div>
                     </div>
+
+                    <div class="panel panel-leagues">
+                        <h2 class="leagues-title">📋 Campionati Monitorati dal Sistema (Legenda Database)</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Sigla Archivio</th>
+                                    <th style="width: 80%;">Nome Competizione 1xBet Originale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {righe_campionati_html}
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
                 <script>
                     const giorniSettimana = {giorni_json};
-                    let giornoSelezionato = giorniSettimana[0].id; // Di default seleziona OGGI
+                    let giornoSelezionato = giorniSettimana[0].id;
                     let cacheMatchFuturi = [];
 
                     function renderCalendario(matchFuturi) {{
@@ -226,7 +247,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         container.innerHTML = "";
                         
                         giorniSettimana.forEach(g => {{
-                            // Conta quanti match appartengono a questo giorno specifico
                             let count = matchFuturi.filter(m => m.data_ora.includes(g.id)).length;
                             
                             let classeColore = "cal-empty";
