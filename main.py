@@ -74,7 +74,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #080c14; color: #ffffff; margin:0; padding:20px; }}
                     .container {{ max-width: 1600px; margin: 0 auto; }}
                     
-                    /* Header Ultra Contrasto */
+                    /* Header Contrasto */
                     .header {{ background: #111c36; padding: 22px 30px; border-radius: 12px; border: 2px solid #253b6e; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }}
                     h1 {{ color: #ffffff; margin: 0; font-size: 25px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }}
                     .status-bar {{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }}
@@ -83,7 +83,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .badge span {{ color: #388bfd; font-weight: 900; font-family: monospace; font-size: 15px; }}
                     .badge-online {{ background: #1f4225; color: #4af262; border-color: #2ea44f; }}
 
-                    /* Barra di Controllo Bilanciata */
+                    /* Controlli di Ricerca */
                     .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #111c36; border: 2px solid #253b6e; padding: 20px; border-radius: 12px; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
                     .search-box {{ background: #03060d; border: 2px solid #388bfd; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-size: 15px; width: 350px; font-weight: 700; }}
                     .search-box::placeholder {{ color: #8ba2c1; }}
@@ -91,9 +91,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .db-info {{ display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }}
                     .db-title {{ font-size: 14px; color: #ffffff; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }}
                     .badge-container {{ display: flex; gap: 6px; flex-wrap: wrap; }}
-                    .db-league-badge {{ background: #388bfd; color: #ffffff; font-weight: 900; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffffff; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
+                    .db-league-badge {{ background: #388bfd; color: #ffffff; font-weight: 900; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffffff; display: inline-block; }}
 
-                    /* Layout delle Tabelle Rinforzato */
+                    /* Tabelle e Pannelli */
                     .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
                     @media (max-width: 1200px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
                     
@@ -103,7 +103,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .future-title {{ color: #ffd166; }}
                     
                     table {{ width: 100%; border-collapse: separate; border-spacing: 0; }}
-                    th {{ background-color: #16223f; color: #ffffff; text-align: left; padding: 14px 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; border-bottom: 3px solid #253b6e; letter-spacing: 0.5px; }}
+                    th {{ background-color: #16223f; color: #ffffff; text-align: left; padding: 14px 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; border-bottom: 3px solid #253b6e; }}
                     td {{ padding: 16px 12px; border-bottom: 1px solid #1e2d4a; color: #ffffff; vertical-align: top; font-size: 14px; }}
                     tr.searchable-row:hover td {{ background-color: #16223f; }}
                     
@@ -114,7 +114,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .score-badge {{ font-size: 13px; color: #ff8787; background: #3b1717; padding: 4px 10px; border-radius: 5px; border: 1px solid #ff6b6b; display: inline-block; margin-bottom: 6px; font-weight: 700; }}
                     .league-text {{ font-size: 13px; color: #a2b4ce; font-weight: 600; }}
                     
-                    .analysis-cell {{ font-size: 14px; color: #ffffff; line-height: 1.6; white-space: pre-line; background: #111c36; padding: 14px; border-radius: 8px; border-left: 5px solid #388bfd; border-top: 1px solid #253b6e; border-right: 1px solid #253b6e; border-bottom: 1px solid #253b6e; }}
+                    .analysis-cell {{ font-size: 14px; color: #ffffff; line-height: 1.6; white-space: pre-line; background: #111c36; padding: 14px; border-radius: 8px; border-left: 5px solid #388bfd; border: 1px solid #253b6e; }}
+                    
+                    /* Messaggi di Stato Persistenti */
+                    .state-row-message {{ text-align: center; color: #a2b4ce; padding: 45px; font-style: italic; font-size: 15px; font-weight: 600; }}
+                    .no-match-found {{ text-align: center; color: #ff6b6b; padding: 30px; font-weight: 700; font-size: 15px; display: none; background: rgba(255, 107, 107, 0.1); border-radius: 8px; margin-top: 10px; border: 1px dashed #ff6b6b; }}
                     
                     b {{ color: #4da3ff; font-weight: 800; background: rgba(56, 139, 253, 0.15); padding: 1px 4px; border-radius: 3px; }}
                     i {{ color: #cbd5e1; font-style: italic; }}
@@ -123,7 +127,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>⚡ Millenium Intelligence Dashboard</h1>
+                        <h1>⚡ Millenium Trading Hub</h1>
                         <div class="status-bar">
                             <div class="badge badge-online">🟢 Radar Attivo</div>
                             <div class="badge">In Play: <span id="count-scanned">0</span></div>
@@ -133,7 +137,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     </div>
                     
                     <div class="controls-panel">
-                        <input type="text" id="searchBar" class="search-box" placeholder="🔍 Filtra squadre o campionati..." onkeyup="filterTables()">
+                        <input type="text" id="searchBar" class="search-box" placeholder="🔍 Scansiona squadre o campionati..." onkeyup="filterTables()">
                         <div class="db-info">
                             <span class="db-title">🗄️ Database Storici Caricati:</span>
                             <div class="badge-container">{badge_campionati}</div>
@@ -153,9 +157,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                     </tr>
                                 </thead>
                                 <tbody id="live-tbody">
-                                    <tr id="live-state-row"><td colspan='4' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight: 600;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>
+                                    <tr id="live-state-row"><td colspan='4' class="state-row-message">📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>
                                 </tbody>
                             </table>
+                            <div id="live-no-results" class="no-match-found">❌ Nessun match trovato per i criteri inseriti nel Live odierno</div>
                         </div>
                         
                         <div class="panel">
@@ -169,9 +174,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                     </tr>
                                 </thead>
                                 <tbody id="future-tbody">
-                                    <tr id="future-state-row"><td colspan='3' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight: 600;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>
+                                    <tr id="future-state-row"><td colspan='3' class="state-row-message">📅 Nessun match in archivio programmato per le prossime ore della data attuale.</td></tr>
                                 </tbody>
                             </table>
+                            <div id="future-no-results" class="no-match-found">❌ Nessun match trovato per i criteri inseriti nel Prematch odierno</div>
                         </div>
                     </div>
                 </div>
@@ -186,10 +192,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             document.getElementById('count-alerts').innerText = data.alert_inviati_totale;
                             document.getElementById('time-updated').innerText = data.ultimo_aggiornamento;
                             
-                            // Gestione righe Live
+                            // Aggiornamento sicuro Live
                             const liveTbody = document.getElementById('live-tbody');
                             if(!data.match_rilevanti || data.match_rilevanti.length === 0) {{
-                                liveTbody.innerHTML = `<tr id="live-state-row"><td colspan='4' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight:600;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>`;
+                                liveTbody.innerHTML = `<tr id="live-state-row"><td colspan='4' class="state-row-message">📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>`;
                             }} else {{
                                 let liveHtml = "";
                                 data.match_rilevanti.forEach(m => {{
@@ -213,10 +219,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                 liveTbody.innerHTML = liveHtml;
                             }}
                             
-                            // Gestione righe Prematch
+                            // Aggiornamento sicuro Prematch
                             const futureTbody = document.getElementById('future-tbody');
                             if(!data.match_futuri || data.match_futuri.length === 0) {{
-                                futureTbody.innerHTML = `<tr id="future-state-row"><td colspan='3' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight:600;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>`;
+                                futureTbody.innerHTML = `<tr id="future-state-row"><td colspan='3' class="state-row-message">📅 Nessun match in archivio programmato per le prossime ore della data attuale.</td></tr>`;
                             }} else {{
                                 let futureHtml = "";
                                 data.match_futuri.forEach(mf => {{
@@ -237,22 +243,60 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             filterTables();
                             
                         }} catch(err) {{
-                            console.log("Errore aggiornamento:", err);
+                            console.log("Errore caricamento dati:", err);
                         }}
                     }}
 
+                    // Funzione di scansione e filtraggio incrociato delle tabelle
                     function filterTables() {{
                         let query = document.getElementById('searchBar').value.toLowerCase();
-                        let rows = document.querySelectorAll('.searchable-row');
                         
-                        rows.forEach(row => {{
-                            let text = row.innerText.toLowerCase();
-                            if(text.includes(query)) {{
+                        // Scansione Pannello LIVE
+                        let liveRows = document.querySelectorAll('#live-tbody .searchable-row');
+                        let liveStateRow = document.getElementById('live-state-row');
+                        let liveNoResults = document.getElementById('live-no-results');
+                        let liveVisibili = 0;
+                        
+                        liveRows.forEach(row => {{
+                            if(row.innerText.toLowerCase().includes(query)) {{
                                 row.style.display = "";
+                                liveVisibili++;
                             }} else {{
                                 row.style.display = "none";
                             }}
                         }});
+
+                        if (query.length > 0) {{
+                            if (liveStateRow) liveStateRow.style.display = "none";
+                            // Se ci sono righe ma nessuna corrisponde, o se la tabella era vuota
+                            liveNoResults.style.display = (liveVisibili === 0) ? "block" : "none";
+                        }} else {{
+                            if (liveStateRow) liveStateRow.style.display = "";
+                            liveNoResults.style.display = "none";
+                        }}
+
+                        // Scansione Pannello PREMATCH
+                        let futureRows = document.querySelectorAll('#future-tbody .searchable-row');
+                        let futureStateRow = document.getElementById('future-state-row');
+                        let futureNoResults = document.getElementById('future-no-results');
+                        let futureVisibili = 0;
+                        
+                        futureRows.forEach(row => {{
+                            if(row.innerText.toLowerCase().includes(query)) {{
+                                row.style.display = "";
+                                futureVisibili++;
+                            }} else {{
+                                row.style.display = "none";
+                            }}
+                        }});
+
+                        if (query.length > 0) {{
+                            if (futureStateRow) futureStateRow.style.display = "none";
+                            futureNoResults.style.display = (futureVisibili === 0) ? "block" : "none";
+                        }} else {{
+                            if (futureStateRow) futureStateRow.style.display = "";
+                            futureNoResults.style.display = "none";
+                        }}
                     }}
 
                     setInterval(updateDashboard, 15000);
@@ -440,9 +484,3 @@ def invia_telegram(messaggio):
 
 if __name__ == "__main__":
     Thread(target=finto_server, daemon=True).start()
-    print("Millenium Bot attivo!", flush=True)
-    
-    while True:
-        scansione_partite_live()
-        scansione_prematch()
-        time.sleep(60)
