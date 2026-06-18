@@ -14,6 +14,11 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 
+# Intestazioni per simulare un browser reale ed evitare i blocchi (User-Agent)
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
 # Memoria globale per la dashboard del PC
 DASHBOARD_DATA = {
     "ultimo_aggiornamento": "Mai",
@@ -100,15 +105,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: #0d1117; color: #c9d1d9; margin:0; padding:25px; }}
                     .container {{ max-width: 1600px; margin: 0 auto; }}
                     
-                    /* Header Professionale */
+                    /* Header */
                     .header {{ background: #161b22; padding: 20px 30px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }}
                     h1 {{ color: #f0f6fc; margin: 0; font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }}
                     .status-bar {{ display: flex; gap: 15px; align-items: center; }}
                     .badge {{ background: #21262d; color: #c9d1d9; padding: 6px 12px; border-radius: 6px; border: 1px solid #30363d; font-size: 13px; font-weight: 500; }}
                     .badge span {{ color: #58a6ff; font-weight: bold; }}
-                    .badge-online {{ background: rgba(56, 139, 253, 0.1); color: #58a6ff; border-color: rgba(56, 139, 253, 0.3); animation: pulse 2s infinite; }}
+                    .badge-online {{ background: rgba(56, 139, 253, 0.1); color: #58a6ff; border-color: rgba(56, 139, 253, 0.3); }}
 
-                    /* Layout Bifronte (Due Colonne Side-by-Side) */
+                    /* Layout Due Colonne */
                     .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
                     @media (max-width: 1100px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
                     
@@ -117,16 +122,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .live-title {{ color: #ff5252; }}
                     .future-title {{ color: #ffab40; }}
                     
-                    /* Tabelle in Stile Card */
                     table {{ width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 10px; }}
                     th {{ background-color: #21262d; color: #8b949e; text-align: left; padding: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #30363d; }}
-                    th:first-child {{ border-top-left-radius: 6px; }}
-                    th:last-child {{ border-top-right-radius: 6px; }}
                     td {{ padding: 14px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }}
-                    tr:last-child td {{ border-bottom: none; }}
                     tr:hover td {{ background-color: #1f242c; }}
                     
-                    /* Elementi di Dettaglio */
                     .time-badge {{ background: rgba(248, 81, 73, 0.1); color: #ff5252; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; border: 1px solid rgba(248, 81, 73, 0.2); display: inline-block; }}
                     .time-badge.future {{ background: rgba(255, 171, 64, 0.1); color: #ffab40; border: 1px solid rgba(255, 171, 64, 0.2); }}
                     .match-team {{ font-weight: 600; font-size: 14px; color: #f0f6fc; margin-bottom: 4px; }}
@@ -134,15 +134,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .league-text {{ font-size: 11px; color: #8b949e; }}
                     .analysis-cell {{ font-size: 12px; color: #c9d1d9; line-height: 1.5; white-space: pre-line; }}
                     
-                    /* Evidenziatori di Consigli */
                     b {{ color: #58a6ff; font-weight: 600; }}
                     i {{ color: #8b949e; font-style: italic; }}
-                    
-                    @keyframes pulse {{
-                        0% {{ opacity: 0.8; }}
-                        50% {{ opacity: 1; }}
-                        100% {{ opacity: 0.8; }}
-                    }}
                 </style>
             </head>
             <body>
@@ -157,7 +150,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     </div>
                     
                     <div class="dashboard-grid">
-                        
                         <div class="panel">
                             <h2 class="live-title">🔥 Partite in Corso (Statistiche Real-Time)</h2>
                             <table>
@@ -190,7 +182,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                 </tbody>
                             </table>
                         </div>
-                        
                     </div>
                 </div>
             </body>
@@ -208,9 +199,6 @@ def finto_server():
     except Exception:
         pass
 
-# =======================================================
-# LOGICHE DI ANALISI AVANZATA (STORICO + TEMPO + LIVE)
-# =======================================================
 def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
     file_standard = f"{nome_file_csv}.csv"
     file_maiuscolo = f"{nome_file_csv}.CSV"
@@ -264,7 +252,7 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
 
 def scansione_prematch():
     try:
-        response = requests.get(URL_FUTURE, timeout=10)
+        response = requests.get(URL_FUTURE, headers=HEADERS, timeout=10)
         if response.status_code == 200:
             dati = response.json()
             partite = dati.get("Value", [])
@@ -293,7 +281,7 @@ def scansione_prematch():
 
 def scansione_partite_live():
     try:
-        response = requests.get(URL_LIVE, timeout=10)
+        response = requests.get(URL_LIVE, headers=HEADERS, timeout=10)
         if response.status_code == 200:
             dati = response.json()
             partite = dati.get("Value", [])
@@ -373,11 +361,11 @@ def invia_telegram(messaggio):
         pass
 
 # =======================================================
-# LOOP DI AVVIO REALE
+# LOOP DI AVVIO
 # =======================================================
 if __name__ == "__main__":
     Thread(target=finto_server, daemon=True).start()
-    print("Millenium Bot attivo! Monitor Live (con Minuti e Gol) + Pre-Match pronto.", flush=True)
+    print("Millenium Bot attivo! Monitor Live + Pre-Match pronto.", flush=True)
     
     while True:
         scansione_partite_live()
