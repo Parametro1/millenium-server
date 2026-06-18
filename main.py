@@ -5,9 +5,10 @@ import time
 import requests
 import pandas as pd
 from threading import Thread
+import json
 
 # ==========================================
-# CONFIGURAZIONI PRINCIPALES
+# CONFIGURAZIONI PRINCIPALI
 # ==========================================
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -18,9 +19,11 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
+# Memoria globale estesa
 DASHBOARD_DATA = {
     "ultimo_aggiornamento": "Mai",
     "partite_scansionate": 0,
+    "alert_inviati_totale": 0,
     "match_rilevanti": [],
     "match_futuri": []
 }
@@ -42,183 +45,231 @@ DIZIONARIO_CAMPIONATI = {
 }
 
 # =======================================================
-# DASHBOARD WEB FUTURISTICA E COMPLETA
+# DASHBOARD INTERATTIVA CON LIVE RELOAD ED AJAX
 # =======================================================
 class DashboardHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args): 
         return
 
     def do_GET(self):
+        # Endpoint API per l'aggiornamento dati asincrono (No-Refresh)
+        if self.path == "/api/data":
+            self.send_response(200)
+            self.send_header("Content-type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(DASHBOARD_DATA).encode("utf-8"))
+            return
+
+        # Pagina principale HTML
         if self.path == "/":
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            # 1. Costruzione tabella LIVE
-            righe_live = ""
-            if not DASHBOARD_DATA["match_rilevanti"]:
-                righe_live = "<tr><td colspan='4' style='text-align:center; color:#8b949e; padding:45px; font-style: italic;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>"
-            else:
-                for m in DASHBOARD_DATA["match_rilevanti"]:
-                    tiri_num = int(m['tiri']) if m['tiri'].isdigit() else 0
-                    icona_tendenza = "🔥" if tiri_num >= 6 else "📊"
-                    righe_live += f"""
-                    <tr>
-                        <td style='text-align:center;'><span class='time-badge'>{m['orario']}</span></td>
-                        <td>
-                            <div class='match-team'>{m['partita']}</div>
-                            <div class='score-badge'>Risultato: {m['punteggio']}</div>
-                            <div class='league-text'>🏆 {m['campionato']}</div>
-                        </td>
-                        <td style='text-align:center; color:#3fb950; font-weight:bold; font-size:16px;'>
-                            <span style='font-size:12px; margin-right:3px;'>{icona_tendenza}</span>{m['tiri']}
-                        </td>
-                        <td class='analysis-cell'>{m['analisi']}</td>
-                    </tr>
-                    """
-
-            # 2. Costruzione tabella MATCH FUTURI
-            righe_future = ""
-            if not DASHBOARD_DATA["match_futuri"]:
-                righe_future = "<tr><td colspan='3' style='text-align:center; color:#8b949e; padding:45px; font-style: italic;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>"
-            else:
-                for mf in DASHBOARD_DATA["match_futuri"]:
-                    righe_future += f"""
-                    <tr>
-                        <td style='text-align:center;'><span class='time-badge future'>{mf['data_ora']}</span></td>
-                        <td>
-                            <div class='match-team'>{mf['partita']}</div>
-                            <div class='league-text'>🌍 {mf['campionato']}</div>
-                        </td>
-                        <td class='analysis-cell'>{mf['analisi']}</td>
-                    </tr>
-                    """
-
-            # 3. Lista dinamica dei campionati attivi nel sistema
-            badge_campionati = "".join([f"<span class='db-league-badge'>{sigla}</span>" for sigla in set(DIZIONARIO_CAMPIONATI.values())])
+            badge_campionati = "".join([f"<span class='db-league-badge'>{sigla}</span>" for sigla in sorted(list(set(DIZIONARIO_CAMPIONATI.values())))])
 
             html = f"""
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Millenium Bot — Advanced Intelligence Hub</title>
-                <meta http-equiv="refresh" content="30">
+                <title>Millenium — Trading Intelligence Hub</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #090d16; color: #cddecb; margin:0; padding:30px; }}
+                    body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #070a12; color: #cdddec; margin:0; padding:20px; }}
                     .container {{ max-width: 1650px; margin: 0 auto; }}
                     
-                    /* Header con Effetto Glow Neon */
-                    .header {{ background: linear-gradient(135deg, #121824 0%, #161f30 100%); padding: 25px 35px; border-radius: 16px; border: 1px solid #24344d; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }}
-                    h1 {{ color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; }}
-                    .status-bar {{ display: flex; gap: 15px; align-items: center; }}
+                    /* Header Premium */
+                    .header {{ background: linear-gradient(135deg, #0f1626 0%, #141f36 100%); padding: 20px 30px; border-radius: 16px; border: 1px solid #1e2d4a; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }}
+                    h1 {{ color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 12px; }}
+                    .status-bar {{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }}
                     
-                    /* Badge di Monitoraggio Avanzati */
-                    .badge {{ background: #111a2e; color: #bcccda; padding: 8px 14px; border-radius: 8px; border: 1px solid #1f2f4d; font-size: 13px; font-weight: 600; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }}
+                    /* Badge di Monitoraggio */
+                    .badge {{ background: #0b1120; color: #9ab0c7; padding: 8px 14px; border-radius: 8px; border: 1px solid #17243c; font-size: 13px; font-weight: 600; }}
                     .badge span {{ color: #388bfd; font-weight: bold; font-family: monospace; font-size: 14px; }}
-                    .badge-online {{ background: rgba(56, 139, 253, 0.12); color: #58a6ff; border-color: rgba(56, 139, 253, 0.4); text-transform: uppercase; letter-spacing: 0.5px; position: relative; padding-left: 25px; }}
-                    .badge-online::before {{ content: ''; position: absolute; left: 10px; top: 13px; width: 8px; height: 8px; background-color: #58a6ff; border-radius: 50%; box-shadow: 0 0 10px #58a6ff; animation: blink 1.5s infinite; }}
+                    .badge-online {{ background: rgba(56, 139, 253, 0.12); color: #58a6ff; border-color: rgba(56, 139, 253, 0.4); padding-left: 25px; position: relative; }}
+                    .badge-online::before {{ content: ''; position: absolute; left: 11px; top: 14px; width: 8px; height: 8px; background-color: #388bfd; border-radius: 50%; box-shadow: 0 0 10px #388bfd; animation: blink 1.5s infinite; }}
 
-                    /* Pannello Info Archivio */
-                    .info-panel {{ background: #0e1726; border: 1px dashed #223754; padding: 12px 20px; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; font-size: 13px; color: #8ba2bd; }}
-                    .db-league-badge {{ background: #1c2b42; color: #58a6ff; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; margin-right: 5px; border: 1px solid #283e5e; }}
+                    /* Controlli Utili: Cerca e Filtri */
+                    .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #0d1527; border: 1px solid #1a2942; padding: 12px 20px; border-radius: 12px; margin-bottom: 25px; gap: 15px; flex-wrap: wrap; }}
+                    .search-box {{ background: #070a12; border: 1px solid #223754; color: #ffffff; padding: 8px 15px; border-radius: 8px; font-size: 13px; width: 280px; transition: all 0.3s; }}
+                    .search-box:focus {{ outline: none; border-color: #388bfd; box-shadow: 0 0 8px rgba(56,139,253,0.3); }}
+                    .db-info {{ font-size: 13px; color: #78909c; display: flex; align-items: center; gap: 8px; }}
+                    .db-league-badge {{ background: #16243a; color: #58a6ff; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #223a5e; }}
 
                     /* Layout Due Colonne */
-                    .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }}
+                    .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
                     @media (max-width: 1200px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
                     
-                    /* Stile dei Pannelli delle Tabelle */
-                    .panel {{ background: #111827; border-radius: 16px; border: 1px solid #212b36; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: border-color 0.3s; }}
-                    .panel:hover {{ border-color: #2b3a4a; }}
-                    h2 {{ font-size: 18px; font-weight: 600; margin-top: 0; margin-bottom: 22px; padding-bottom: 12px; border-bottom: 1px solid #1f2937; display: flex; align-items: center; gap: 10px; }}
+                    /* Pannelli */
+                    .panel {{ background: #0f1626; border-radius: 16px; border: 1px solid #1b283f; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }}
+                    h2 {{ font-size: 16px; font-weight: 600; margin-top: 0; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1a2942; display: flex; align-items: center; gap: 10px; }}
                     .live-title {{ color: #ff5252; }}
                     .future-title {{ color: #ffab40; }}
                     
-                    /* Tabelle Strutturate */
+                    /* Tabelle */
                     table {{ width: 100%; border-collapse: separate; border-spacing: 0; }}
-                    th {{ background-color: #1f2937; color: #9ca3af; text-align: left; padding: 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #374151; }}
+                    th {{ background-color: #162238; color: #90a4ae; text-align: left; padding: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #223554; }}
                     th:first-child {{ border-top-left-radius: 8px; border-bottom-left-radius: 8px; }}
                     th:last-child {{ border-top-right-radius: 8px; border-bottom-right-radius: 8px; }}
-                    td {{ padding: 16px 14px; border-bottom: 1px solid #1f2937; color: #e5e7eb; vertical-align: top; }}
+                    td {{ padding: 14px 12px; border-bottom: 1px solid #162238; color: #cfd8dc; vertical-align: top; transition: background 0.2s; }}
                     tr:last-child td {{ border-bottom: none; }}
-                    tr:hover td {{ background-color: #172030; }}
+                    tr:hover td {{ background-color: #131e33; }}
                     
-                    /* Badge di Contorno */
-                    .time-badge {{ background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 12px; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-block; font-family: monospace; }}
-                    .time-badge.future {{ background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }}
-                    .match-team {{ font-weight: 700; font-size: 15px; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.2px; }}
-                    .score-badge {{ font-size: 12px; color: #f87171; background: rgba(239, 68, 68, 0.08); padding: 3px 8px; border-radius: 5px; display: inline-block; margin-bottom: 6px; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 600; }}
-                    .league-text {{ font-size: 12px; color: #9ca3af; font-weight: 500; }}
-                    .analysis-cell {{ font-size: 13px; color: #d1d5db; line-height: 1.6; white-space: pre-line; background: rgba(255,255,255,0.01); padding: 10px; border-radius: 6px; border-left: 3px solid #3b82f6; }}
+                    /* Badges Dettagli */
+                    .time-badge {{ background: rgba(239, 68, 68, 0.12); color: #ff5252; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; border: 1px solid rgba(239, 68, 68, 0.25); display: inline-block; font-family: monospace; }}
+                    .time-badge.future {{ background: rgba(245, 158, 11, 0.12); color: #ffab40; border: 1px solid rgba(245, 158, 11, 0.25); }}
+                    .match-team {{ font-weight: 700; font-size: 14px; color: #ffffff; margin-bottom: 5px; }}
+                    .score-badge {{ font-size: 11px; color: #ffa198; background: rgba(239, 68, 68, 0.05); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 5px; border: 1px solid rgba(239, 68, 68, 0.15); }}
+                    .league-text {{ font-size: 11px; color: #90a4ae; }}
                     
-                    /* Evidenziazione Stili all'interno delle analisi */
-                    b {{ color: #60a5fa; font-weight: 700; background: rgba(96, 165, 250, 0.08); padding: 2px 4px; border-radius: 4px; }}
-                    i {{ color: #9ca3af; font-style: italic; }}
+                    .analysis-cell {{ font-size: 12px; color: #eceff1; line-height: 1.5; white-space: pre-line; background: rgba(255,255,255,0.01); padding: 10px; border-radius: 6px; border-left: 3px solid #388bfd; transition: all 0.2s; }}
+                    tr:hover .analysis-cell {{ background: rgba(56, 139, 253, 0.04); border-left-color: #64b5f6; }}
                     
-                    @keyframes blink {{
-                        0% {{ opacity: 0.4; }}
-                        50% {{ opacity: 1; }}
-                        100% {{ opacity: 0.4; }}
-                    }}
+                    b {{ color: #64b5f6; font-weight: 700; background: rgba(100, 181, 246, 0.08); padding: 1px 4px; border-radius: 4px; }}
+                    i {{ color: #90a4ae; font-style: italic; }}
+                    
+                    @keyframes blink {{ 0% {{ opacity: 0.4; }} 50% {{ opacity: 1; }} 100% {{ opacity: 0.4; }} }}
                 </style>
             </head>
             <body>
                 <div class="container">
-                    <!-- Intestazione -->
                     <div class="header">
                         <h1>⚡ Millenium Intelligence Dashboard</h1>
                         <div class="status-bar">
-                            <div class="badge badge-online">Radar Live Attivo</div>
-                            <div class="badge">In Play: <span>{DASHBOARD_DATA["partite_scansionate"]}</span></div>
-                            <div class="badge">Aggiornato: <span>{DASHBOARD_DATA["ultimo_aggiornamento"]}</span></div>
+                            <div class="badge badge-online">Radar Attivo</div>
+                            <div class="badge">In Play: <span id="count-scanned">0</span></div>
+                            <div class="badge">Alert Telegram: <span id="count-alerts">0</span></div>
+                            <div class="badge">Aggiornato: <span id="time-updated">Mai</span></div>
                         </div>
                     </div>
                     
-                    <!-- Barra info database -->
-                    <div class="info-panel">
-                        <strong>🗄️ Database Storici Caricati nel Sistema:</strong>
-                        <div>{badge_campionati}</div>
+                    <div class="controls-panel">
+                        <input type="text" id="searchBar" class="search-box" placeholder="🔍 Cerca squadra o campionato..." onkeyup="filterTables()">
+                        <div class="db-info">
+                            <strong>🗄️ Database Storici:</strong>
+                            <div>{badge_campionati}</div>
+                        </div>
                     </div>
                     
-                    <!-- Griglia Layout -->
                     <div class="dashboard-grid">
-                        
-                        <!-- SEZIONE LIVE -->
                         <div class="panel">
-                            <h2 class="live-title">🔴 Monitor Live Real-Time (Filtro Tiri attivi)</h2>
+                            <h2 class="live-title">🔴 Partite in Corso Real-Time</h2>
                             <table>
                                 <thead>
                                     <tr>
                                         <th style="width: 15%; text-align:center;">Minuto</th>
-                                        <th style="width: 42%;">Incontro / Competizione</th>
+                                        <th style="width: 45%;">Incontro / Competizione</th>
                                         <th style="width: 15%; text-align:center;">Tiri Porta</th>
-                                        <th style="width: 28%;">Suggerimento Algoritmo</th>
+                                        <th style="width: 25%;">Analisi Algoritmo</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {righe_live}
+                                <tbody id="live-tbody">
+                                    <tr><td colspan='4' style='text-align:center; color:#90a4ae; padding:40px;'>📡 Sincronizzazione radar in corso...</td></tr>
                                 </tbody>
                             </table>
                         </div>
                         
-                        <!-- SEZIONE PREMATCH -->
                         <div class="panel">
-                            <h2 class="future-title">⏳ Palinsesto Prossime Ore (Studio Preventivo)</h2>
+                            <h2 class="future-title">⏳ Palinsesto Prossime Ore</h2>
                             <table>
                                 <thead>
                                     <tr>
                                         <th style="width: 20%; text-align:center;">Inizio</th>
-                                        <th style="width: 45%;">Match / Campionato</th>
-                                        <th style="width: 35%;">Analisi Statistica Archivio</th>
+                                        <th style="width: 50%;">Match / Campionato</th>
+                                        <th style="width: 30%;">Analisi Preventiva</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {righe_future}
+                                <tbody id="future-tbody">
+                                    <tr><td colspan='3' style='text-align:center; color:#90a4ae; padding:40px;'>📅 Elaborazione palinsesto in corso...</td></tr>
                                 </tbody>
                             </table>
                         </div>
-                        
                     </div>
                 </div>
+
+                <script>
+                    async function updateDashboard() {{
+                        try {{
+                            const response = await fetch('/api/data');
+                            const data = await response.json();
+                            
+                            // Aggiorna contatori in alto
+                            document.getElementById('count-scanned').innerText = data.partite_scansionate;
+                            document.getElementById('count-alerts').innerText = data.alert_inviati_totale;
+                            document.getElementById('time-updated').innerText = data.ultimo_aggiornamento;
+                            
+                            // Aggiorna Tabella Live
+                            let liveHtml = "";
+                            if(data.match_rilevanti.length === 0) {{
+                                liveHtml = "<tr><td colspan='4' style='text-align:center; color:#90a4ae; padding:40px; font-style:italic;'>📡 Nessun match live rilevato con tiri significativi.</td></tr>";
+                            }} else {{
+                                data.match_rilevanti.forEach(m => {{
+                                    let tiriNum = parseInt(m.tiri) || 0;
+                                    let icon = tiriNum >= 6 ? "🔥 " : "📊 ";
+                                    liveHtml += `
+                                        <tr class="searchable-row">
+                                            <td style="text-align:center;"><span class="time-badge">${{m.orario}}</span></td>
+                                            <td>
+                                                <div class="match-team">${{m.partita}}</div>
+                                                <div class="score-badge">Risultato: ${{m.punteggio}}</div>
+                                                <div class="league-text">🏆 ${{m.campionato}}</div>
+                                            </td>
+                                            <td style="text-align:center; color:#3fb950; font-weight:bold; font-size:15px;">
+                                                <span>${{icon}}</span>${{m.tiri}}
+                                            </td>
+                                            <td class="analysis-cell">${{m.analisi}}</td>
+                                        </tr>
+                                    `;
+                                }});
+                            }}
+                            document.getElementById('live-tbody').innerHTML = liveHtml;
+                            
+                            // Aggiorna Tabella Futuri
+                            let futureHtml = "";
+                            if(data.match_futuri.length === 0) {{
+                                futureHtml = "<tr><td colspan='3' style='text-align:center; color:#90a4ae; padding:40px; font-style:italic;'>📅 Nessun match in archivio nelle prossime ore.</td></tr>";
+                            }} else {{
+                                data.match_futuri.forEach(mf => {{
+                                    futureHtml += `
+                                        <tr class="searchable-row">
+                                            <td style="text-align:center;"><span class="time-badge future">${{mf.data_ora}}</span></td>
+                                            <td>
+                                                <div class="match-team">${{mf.partita}}</div>
+                                                <div class="league-text">🌍 ${{mf.campionato}}</div>
+                                            </td>
+                                            <td class="analysis-cell">${{mf.analisi}}</td>
+                                        </tr>
+                                    `;
+                                }});
+                            }}
+                            document.getElementById('future-tbody').innerHTML = futureHtml;
+                            
+                            // Riapplica il filtro di ricerca se l'utente stava scrivendo
+                            filterTables();
+                            
+                        }} catch(err) {{
+                            console.log("Errore aggiornamento dati asincrono:", err);
+                        }}
+                    }}
+
+                    // Funzione di Filtro Istantaneo (Barra di ricerca)
+                    function filterTables() {{
+                        let query = document.getElementById('searchBar').value.toLowerCase();
+                        let rows = document.querySelectorAll('.searchable-row');
+                        rows.forEach(row => {{
+                            let text = row.innerText.toLowerCase();
+                            if(text.includes(query)) {{
+                                row.style.display = "";
+                            }} else {{
+                                row.style.display = "none";
+                            }}
+                        }});
+                    }}
+
+                    // Avvio loop asincrono ogni 15 secondi (molto più reattivo!)
+                    setInterval(updateDashboard, 15000);
+                    window.onload = updateDashboard;
+                </script>
             </body>
             </html>
             """
@@ -382,9 +433,10 @@ def scansione_partite_live():
                             f"⏱️ *Minuto:* {minuto_corrente}' minuto\n\n"
                             f"🎯 *STATISTICHE LIVE:* Tiri totali {tiri_totali_live} ({tiri_porta_casa}-{tiri_porta_ospite})\n\n"
                             f"📊 *STUDIO DINAMICO PROGETTATO:*\n{consiglio_text}\n\n"
-                            f"🍀 _Attendi che la quota di mercato tocchi il valore consigliato sul tuo bookmaker prima di piazzare!_"
+                            f"🍀 _Attendi che la quota di mercato tocchi il valore consigliato sul tuo bookmaker prima di piazza!_"
                         )
                         invia_telegram(messaggio)
+                        DASHBOARD_DATA["alert_inviati_totale"] += 1
                         time.sleep(5)
             DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
     except Exception as e:
