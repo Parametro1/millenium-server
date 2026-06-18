@@ -40,14 +40,22 @@ else:
 
 DIZIONARIO_CAMPIONATI = {
     "Calcio. Inghilterra. Premier League": "E0", "Calcio. Inghilterra. Championship": "E1",
-    "Calcio. Germania. Bundesliga": "D1", "Calcio. Germania. 2. Bundesliga": "D2",
+    "Calcio. Inghilterra. League One": "E2", "Calcio. Inghilterra. League Two": "E3",
+    "Calcio. Inghilterra. National League": "EC", "Calcio. Germania. Bundesliga": "D1",
+    "Calcio. Germania. 2. Bundesliga": "D2", "Calcio. Germania. 3. Liga": "D3",
     "Calcio. Italia. Serie A": "I1", "Calcio. Italia. Serie B": "I2",
-    "Calcio. Olanda. Eredivisie": "N1", "Calcio. Spagna. Primera Division": "SP1",
-    "Calcio. Spagna. Segunda Division": "SP2", "Calcio. Francia. Ligue 1": "F1",
-    "Calcio. Francia. Ligue 2": "F2", "Calcio. Turchia. SuperLig": "T1", "Calcio. USA. MLS": "USA"
+    "Calcio. Spagna. Primera Division": "SP1", "Calcio. Spagna. Segunda Division": "SP2",
+    "Calcio. Francia. Ligue 1": "F1", "Calcio. Francia. Ligue 2": "F2",
+    "Calcio. Olanda. Eredivisie": "N1", "Calcio. Olanda. Eerste Divisie": "N2",
+    "Calcio. Portogallo. Primeira Liga": "P1", "Calcio. Turchia. SuperLig": "T1",
+    "Calcio. Belgio. Pro League": "B1", "Calcio. Scozia. Premiership": "SC0",
+    "Calcio. Scozia. Championship": "SC1", "Calcio. Grecia. Super League": "G1",
+    "Calcio. Austria. Bundesliga": "A1", "Calcio. Svizzera. Super League": "SW1",
+    "Calcio. Danimarca. Superligaen": "DN1", "Calcio. Norvegia. Eliteserien": "N1",
+    "Calcio. Svezia. Allsvenskan": "S1", "Calcio. USA. MLS": "USA"
 }
 
-CAMPIONATI_ALL = ["E0", "E1", "D1", "D2", "I1", "I2", "N1", "SP1", "SP2", "F1", "F2", "T1", "USA"]
+CAMPIONATI_ALL = list(DIZIONARIO_CAMPIONATI.values())
 
 def salva_dati_su_file():
     try:
@@ -71,10 +79,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             
             badge_campionati = "".join([f"<span class='db-league-badge'>{sigla}</span>" for sigla in CAMPIONATI_ALL])
-            
-            righe_campionati_html = ""
-            for nome_esteso, sigla in DIZIONARIO_CAMPIONATI.items():
-                righe_campionati_html += f"<tr><td style='color:#388bfd; font-weight:900;'>{sigla}</td><td style='color:#cbd5e1; font-weight:600;'>{nome_esteso}</td></tr>"
+            righe_campionati_html = "".join([f"<tr><td style='color:#388bfd; font-weight:900;'>{sigla}</td><td style='color:#cbd5e1; font-weight:600;'>{nome}</td></tr>" for nome, sigla in DIZIONARIO_CAMPIONATI.items()])
 
             giorni_list = []
             nomi_giorni = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"]
@@ -82,7 +87,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             for i in range(7):
                 d = oggi + timedelta(days=i)
                 tag = "OGGI" if i == 0 else ("DOMANI" if i == 1 else f"{nomi_giorni[d.weekday()]} {d.strftime('%d/%m')}")
-                giorni_list.append({"id": d.strftime("%d/%m"), "label": tag})
+                giorni_list.append({"id": d.strftime("%d/%m"), "label": tag, "is_oggi": i == 0})
             
             giorni_json = json.dumps(giorni_list)
 
@@ -95,68 +100,58 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 <style>
                     body {{ font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050811; color: #ffffff; margin:0; padding:20px; }}
                     .container {{ max-width: 1650px; margin: 0 auto; }}
-                    
                     .header {{ background: linear-gradient(135deg, #09152e 0%, #111c36 100%); padding: 22px 30px; border-radius: 12px; border: 2px solid #1e366a; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }}
                     h1 {{ color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 10px rgba(56,139,253,0.4); }}
                     .status-bar {{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }}
-                    
                     .badge {{ background: #02040a; color: #ffffff; padding: 10px 16px; border-radius: 8px; border: 2px solid #1e366a; font-size: 14px; font-weight: 700; }}
                     .badge span {{ color: #388bfd; font-weight: 900; font-family: monospace; font-size: 15px; }}
                     .badge-online {{ background: #0c2d14; color: #4af262; border-color: #1f6f32; text-shadow: 0 0 8px #4af262; }}
                     .badge-live-count {{ background: #3b0d0d; color: #ff6b6b; border-color: #7a1c1c; }}
-                    .badge-live-count span {{ color: #ff6b6b; }}
-
-                    .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #091124; border: 2px solid #16264c; padding: 20px; border-radius: 12px; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
-                    .search-box {{ background: #020409; border: 2px solid #388bfd; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-size: 15px; width: 350px; font-weight: 700; box-shadow: 0 0 10px rgba(56,139,253,0.1); }}
-                    .search-box:focus {{ outline: none; border-color: #58a6ff; box-shadow: 0 0 15px rgba(88,166,255,0.3); }}
                     
+                    .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #091124; border: 2px solid #16264c; padding: 20px; border-radius: 12px; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
+                    .search-box {{ background: #020409; border: 2px solid #388bfd; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-size: 15px; width: 350px; font-weight: 700; }}
                     .db-info {{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }}
                     .db-title {{ font-size: 13px; color: #8bc2ff; font-weight: 800; text-transform: uppercase; }}
                     .badge-container {{ display: flex; gap: 6px; flex-wrap: wrap; }}
                     .db-league-badge {{ background: #1f3a6d; color: #ffffff; font-weight: 900; font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 1px solid #388bfd; }}
 
-                    /* CALENDARIO MODIFICATO CON SCRITTE GIALLO OCRA */
                     .calendar-section {{ background: #091124; border: 2px solid #16264c; padding: 20px; border-radius: 12px; margin-bottom: 25px; }}
-                    .calendar-title {{ font-size: 14px; font-weight: 800; text-transform: uppercase; color: #daa520; margin-bottom: 15px; letter-spacing: 0.5px; }}
+                    .calendar-title {{ font-size: 14px; font-weight: 800; text-transform: uppercase; color: #daa520; margin-bottom: 15px; }}
                     .calendar-grid {{ display: flex; gap: 12px; flex-wrap: wrap; }}
+                    .cal-btn {{ flex: 1; min-width: 130px; padding: 14px 10px; border-radius: 8px; border: 2px solid #222; background: #111; text-align: center; cursor: pointer; font-weight: 800; transition: all 0.2s ease; }}
+                    .cal-btn .cal-sub {{ font-size: 11px; font-weight: 700; margin-top: 4px; display: block; }}
                     
-                    .cal-btn {{ flex: 1; min-width: 130px; padding: 14px 10px; border-radius: 8px; border: 2px solid #222; background: #111; color: #daa520 !important; text-align: center; cursor: pointer; font-weight: 800; transition: all 0.2s ease; }}
-                    .cal-btn .cal-sub {{ font-size: 11px; font-weight: 700; color: #daa520 !important; opacity: 0.85; margin-top: 4px; display: block; }}
-                    
-                    /* Gli sfondi rimangono identici, ma applichiamo il colore giallo ocra forzato ai testi */
-                    .cal-btn.cal-selected {{ background: #e0a904 !important; color: #daa520 !important; border-color: #ffea00 !important; box-shadow: 0 0 15px #e0a904; }}
+                    .cal-btn.cal-oggi {{ background: #064e3b !important; color: #ffffff !important; border-color: #4af262 !important; box-shadow: 0 0 12px rgba(74,242,98,0.3); }}
+                    .cal-btn.cal-oggi .cal-sub {{ color: #ffffff !important; }}
+                    .cal-btn.cal-futuro {{ color: #daa520 !important; }}
+                    .cal-btn.cal-futuro .cal-sub {{ color: #daa520 !important; }}
                     .cal-btn.cal-hot {{ background: #4c1d95; border-color: #c084fc; }}
-                    .cal-btn.cal-normal {{ background: #064e3b; border-color: #34d399; }}
+                    .cal-btn.cal-normal {{ background: #111c36; border-color: #1e366a; }}
                     .cal-btn.cal-empty {{ background: #2d0c0c; border-color: #7f1d1d; cursor: not-allowed; }}
+                    .cal-btn.cal-selected:not(.cal-oggi) {{ background: #e0a904 !important; color: #111 !important; border-color: #ffea00 !important; }}
+                    .cal-btn.cal-selected:not(.cal-oggi) .cal-sub {{ color: #111 !important; }}
 
                     .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }}
                     @media (max-width: 1300px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
-                    
-                    .panel {{ background: #0a1122; border-radius: 12px; padding: 22px; transition: all 0.3s; }}
-                    .panel-live {{ border: 2px solid #7a1c1c; box-shadow: 0 0 15px rgba(122,28,28,0.2); }}
-                    .panel-future {{ border: 2px solid #b38600; box-shadow: 0 0 15px rgba(179,134,0,0.2); }}
+                    .panel {{ background: #0a1122; border-radius: 12px; padding: 22px; }}
+                    .panel-live {{ border: 2px solid #7a1c1c; }}
+                    .panel-future {{ border: 2px solid #b38600; }}
                     .panel-leagues {{ border: 2px solid #1e366a; background: #060d1a; }}
-                    
-                    h2 {{ font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #222; }}
-                    .live-title {{ color: #ff5252; text-shadow: 0 0 8px rgba(255,82,82,0.3); }}
-                    .future-title {{ color: #ffc107; text-shadow: 0 0 8px rgba(255,193,7,0.3); }}
-                    .leagues-title {{ color: #388bfd; text-shadow: 0 0 8px rgba(56,139,253,0.3); }}
+                    h2 {{ font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid #222; }}
+                    .live-title {{ color: #ff5252; }} .future-title {{ color: #ffc107; }} .leagues-title {{ color: #388bfd; }}
                     
                     table {{ width: 100%; border-collapse: separate; border-spacing: 0; }}
                     th {{ background-color: #0f192f; color: #8bc2ff; text-align: left; padding: 14px 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; border-bottom: 3px solid #1e366a; }}
                     td {{ padding: 16px 12px; border-bottom: 1px solid #162548; color: #ffffff; vertical-align: top; font-size: 14px; }}
                     tr.searchable-row:hover td {{ background-color: #121f3a; }}
-                    
-                    .time-badge {{ background: #451313; color: #ff5252; padding: 6px 10px; border-radius: 6px; font-weight: 800; border: 2px solid #ff5252; display: inline-block; font-size: 13px; }}
+                    .time-badge {{ background: #451313; color: #ff5252; padding: 6px 10px; border-radius: 6px; font-weight: 800; border: 2px solid #ff5252; display: inline-block; }}
                     .time-badge.future {{ background: #3b2a07; color: #ffc107; border: 2px solid #ffc107; }}
-                    
                     .match-team {{ font-weight: 800; font-size: 16px; color: #ffffff; margin-bottom: 6px; }}
-                    .score-badge {{ font-size: 13px; color: #ff8787; background: #2d0e0e; padding: 4px 10px; border-radius: 5px; border: 1px solid #a82c2c; display: inline-block; margin-bottom: 6px; font-weight: 700; }}
-                    .league-text {{ font-size: 12px; color: #8ba2c1; font-weight: 600; }}
-                    
-                    .analysis-cell {{ font-size: 14px; color: #ffffff; line-height: 1.6; white-space: pre-line; background: #070d1a; padding: 14px; border-radius: 8px; border-left: 5px solid #388bfd; border: 1px solid #16264c; }}
-                    
-                    .state-row-message {{ text-align: center; color: #8ba2c1; padding: 45px; font-style: italic; font-size: 15px; font-weight: 600; }}
+                    .score-badge {{ font-size: 13px; color: #ff8787; background: #2d0e0e; padding: 4px 10px; border-radius: 5px; border: 1px solid #a82c2c; display: inline-block; font-weight: 700; }}
+                    .stats-indicator {{ font-size: 12px; color: #a1b0cb; background: #16223f; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 5px; font-family: monospace; }}
+                    .league-text {{ font-size: 12px; color: #8ba2c1; font-weight: 600; margin-top: 4px; }}
+                    .analysis-cell {{ font-size: 14px; color: #ffffff; line-height: 1.6; white-space: pre-line; background: #070d1a; padding: 14px; border-radius: 8px; border: 1px solid #16264c; }}
+                    .state-row-message {{ text-align: center; color: #8ba2c1; padding: 45px; font-style: italic; }}
                     b {{ color: #4da3ff; font-weight: 800; }} i {{ color: #cbd5e1; }}
                 </style>
             </head>
@@ -181,7 +176,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     </div>
 
                     <div class="calendar-section">
-                        <div class="calendar-title">📅 CALENDARIO SETTIMANALE (Clicca un giorno per filtrare lo Studio Preventivo)</div>
+                        <div class="calendar-title">📅 CALENDARIO SETTIMANALE DI TRADING (Oggi evidenziato in Verde)</div>
                         <div class="calendar-grid" id="calendarContainer"></div>
                     </div>
                     
@@ -193,7 +188,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                     <tr>
                                         <th style="width: 15%; text-align:center;">Minuto</th>
                                         <th style="width: 45%;">Incontro / Competizione</th>
-                                        <th style="width: 15%; text-align:center;">Tiri Porta</th>
+                                        <th style="width: 15%; text-align:center;">Pressione Live</th>
                                         <th style="width: 25%;">Suggerimento</th>
                                     </tr>
                                 </thead>
@@ -234,7 +229,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             </tbody>
                         </table>
                     </div>
-
                 </div>
 
                 <script>
@@ -245,27 +239,20 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     function renderCalendario(matchFuturi) {{
                         const container = document.getElementById('calendarContainer');
                         container.innerHTML = "";
-                        
                         giorniSettimana.forEach(g => {{
                             let count = matchFuturi.filter(m => m.data_ora.includes(g.id)).length;
-                            
-                            let classeColore = "cal-empty";
+                            let classeStato = "cal-empty";
                             let subText = "(No Bet)";
-                            
                             if (count > 0) {{
                                 subText = count === 1 ? "[1 Match]" : `[${{count}} Match]`;
-                                classeColore = count >= 5 ? "cal-hot" : "cal-normal";
+                                classeStato = count >= 5 ? "cal-hot" : "cal-normal";
                             }}
-                            
-                            if (g.id === giornoSelezionato) {{
-                                classeColore = "cal-selected";
-                            }}
-                            
+                            let classeTipogiorno = g.is_oggi ? "cal-oggi" : "cal-futuro";
+                            let classeSelezionato = (g.id === giornoSelezionato) ? "cal-selected" : "";
                             const btn = document.createElement('div');
-                            btn.className = `cal-btn ${{classeColore}}`;
+                            btn.className = `cal-btn ${{classeTipogiorno}} ${{classeStato}} ${{classeSelezionato}}`;
                             btn.innerHTML = `${{g.label}} <span class="cal-sub">${{subText}}</span>`;
-                            
-                            if (count > 0 || g.id === giorniSettimana[0].id) {{
+                            if (count > 0 || g.is_oggi) {{
                                 btn.onclick = () => {{
                                     giornoSelezionato = g.id;
                                     renderCalcoloPrematch();
@@ -279,7 +266,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     function renderCalcoloPrematch() {{
                         const futureTbody = document.getElementById('future-tbody');
                         let matchFiltrati = cacheMatchFuturi.filter(m => m.data_ora.includes(giornoSelezionato));
-                        
                         if (matchFiltrati.length === 0) {{
                             futureTbody.innerHTML = `<tr><td colspan='3' class="state-row-message">📅 Nessun match in archivio programmato per la giornata selezionata.</td></tr>`;
                         }} else {{
@@ -305,14 +291,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         try {{
                             const response = await fetch('/api/data');
                             const data = await response.json();
-                            
                             document.getElementById('count-scanned').innerText = data.partite_scansionate;
                             document.getElementById('count-alerts').innerText = data.alert_inviati_totale;
                             document.getElementById('time-updated').innerText = data.ultimo_aggiornamento;
                             
                             const liveTbody = document.getElementById('live-tbody');
                             if(!data.match_rilevanti || data.match_rilevanti.length === 0) {{
-                                liveTbody.innerHTML = `<tr><td colspan='4' class="state-row-message">📡 In attesa di match live con tiri in porta attivi...</td></tr>`;
+                                liveTbody.innerHTML = `<tr><td colspan='4' class="state-row-message">📡 In attesa di match live con pressione offensiva attiva...</td></tr>`;
                             }} else {{
                                 let liveHtml = "";
                                 data.match_rilevanti.forEach(m => {{
@@ -324,32 +309,27 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                                 <div class="score-badge">Risultato: ${{m.punteggio}}</div>
                                                 <div class="league-text">🏆 ${{m.campionato}}</div>
                                             </td>
-                                            <td style="text-align:center; color:#4af262; font-weight:bold; font-size:16px;">🔥 ${{m.tiri}}</td>
+                                            <td>
+                                                <div style="color:#4af262; font-weight:bold; font-size:15px; text-align:center;">🎯 Porta: ${{m.tiri_porta}}</div>
+                                                <span class="stats-indicator">💥 Totali: ${{m.tiri_totali}} | ⚡ AP/m: ${{m.ap_minuto}}</span>
+                                            </td>
                                             <td class="analysis-cell">${{m.analisi}}</td>
                                         </tr>
                                     `;
                                 }});
                                 liveTbody.innerHTML = liveHtml;
                             }}
-                            
                             cacheMatchFuturi = data.match_futuri || [];
                             renderCalendario(cacheMatchFuturi);
                             renderCalcoloPrematch();
-                            
-                        }} catch(err) {{
-                            console.log(err);
-                        }}
+                        }} catch(err) {{ console.log(err); }}
                     }}
 
                     function filterTables() {{
                         let query = document.getElementById('searchBar').value.toLowerCase();
                         let rows = document.querySelectorAll('.searchable-row');
                         rows.forEach(row => {{
-                            if(row.innerText.toLowerCase().includes(query)) {{
-                                row.style.display = "";
-                            }} else {{
-                                row.style.display = "none";
-                            }}
+                            row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
                         }});
                     }}
 
@@ -422,8 +402,7 @@ def scansione_prematch():
                     })
             DASHBOARD_DATA["match_futuri"] = prossimi_match
             salva_dati_su_file()
-    except Exception as e:
-        print(f"⚠️ Timeout Prematch (Sbloccato): {e}", flush=True)
+    except Exception as e: print(f"⚠️ Timeout Prematch: {e}", flush=True)
 
 def scansione_partite_live():
     try:
@@ -447,27 +426,52 @@ def scansione_partite_live():
                     totale_gol_attuali = gol_casa + gol_ospite
                     
                     tiri_porta_casa, tiri_porta_ospite = 0, 0
-                    for stat in sc_data.get("S", []):
-                        if stat.get("T") == 2:
-                            tiri_porta_casa, tiri_porta_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                            break
-                    tiri_totali_live = tiri_porta_casa + tiri_porta_ospite
+                    tiri_fuori_casa, tiri_fuori_ospite = 0, 0
+                    ap_casa, ap_ospite = 0, 0
                     
-                    if tiri_totali_live > 0:
+                    for stat in sc_data.get("S", []):
+                        tipo_stat = stat.get("T")
+                        if tipo_stat == 2:  # Tiri in porta
+                            tiri_porta_casa, tiri_porta_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
+                        elif tipo_stat == 1:  # Tiri Fuori
+                            tiri_fuori_casa, tiri_fuori_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
+                        elif tipo_stat == 3:  # Attacchi Pericolosi
+                            ap_casa, ap_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
+                    
+                    tiri_porta_totali = tiri_porta_casa + tiri_porta_ospite
+                    tiri_totali = tiri_porta_totali + tiri_fuori_casa + tiri_fuori_ospite
+                    ap_totali = ap_casa + ap_ospite
+                    ap_al_minuto = round(ap_totali / minuto_corrente, 2) if minuto_corrente > 0 else 0.0
+                    
+                    # Filtro di visualizzazione sulla dashboard se c'è attività
+                    if tiri_totali > 0 or ap_totali > 0:
+                        analisi_output = analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True)
                         nuovi_match_rilevanti.append({
                             "orario": f"{minuto_corrente}'", "partita": f"{squadra_casa} - {squadra_ospite}",
-                            "punteggio": f"{gol_casa} - {gol_ospite}", "campionato": campionato_live,
-                            "tiri": f"{tiri_totali_live}", "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True)
+                            "punteggio": f"{gol_casa} - {gol_ospite}", "campionato": campeonato_live,
+                            "tiri_porta": tiri_porta_totali, "tiri_totali": tiri_totali, "ap_minuto": ap_al_minuto,
+                            "analisi": analisi_output
                         })
-                    if tiri_totali_live >= 5:
-                        consiglio_text = analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True).replace("<b>", "*").replace("</b>", "*").replace("<i>", "_").replace("</i>", "_")
-                        invia_telegram(f"⚽ *Match:* {squadra_casa} - {squadra_ospite}\n🎯 *Tiri:* {tiri_totali_live}\n📊 *Studio:*\n{consiglio_text}")
-                        DASHBOARD_DATA["alert_inviati_totale"] += 1
-                        time.sleep(2)
+                        
+                        # TRIGGER ALERT TELEGRAM MULTI-PARAMETRICI (Attacchi Pericolosi al minuto elevati o Tiri in porta consistenti)
+                        if (ap_al_minuto >= 1.15 and minuto_corrente >= 15 and tiri_totali >= 4) or (tiri_porta_totali >= 5):
+                            consiglio_clean = analisi_output.replace("<b>", "*").replace("</b>", "*").replace("<i>", "_").replace("</i>", "_")
+                            messaggio = (
+                                f"🔥 *MILLENIUM ATTACCO IN CORSO* 🔥\n\n"
+                                f"⚽ *Match:* {squadra_casa} - {squadra_ospite}\n"
+                                f"⏱️ *Minuto:* {minuto_corrente}'  |  📊 *Score:* {gol_casa}-{gol_ospite}\n\n"
+                                f"🎯 Tiri in Porta: *{tiri_porta_totali}*\n"
+                                f"💥 Tiri Totali: *{tiri_totali}*\n"
+                                f"⚡ Pressione AP/Min: *{ap_al_minuto}*\n\n"
+                                f"📈 *Studio Storico:*\n{consiglio_clean}"
+                            )
+                            invia_telegram(messaggio)
+                            DASHBOARD_DATA["alert_inviati_totale"] += 1
+                            time.sleep(2)
+                            
             DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
             salva_dati_su_file()
-    except Exception as e:
-        print(f"⚠️ Timeout Live (Sbloccato): {e}", flush=True)
+    except Exception as e: print(f"⚠️ Errore Live Scansione: {e}", flush=True)
 
 def invia_telegram(messaggio):
     try: requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "Markdown"}, timeout=5)
