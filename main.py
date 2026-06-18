@@ -15,9 +15,16 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 
+# Headers potenziati anti-blocco per emulare un browser reale
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
 }
+
+# Sessione persistente per mantenere la connessione attiva ed evitare i drop di rete
+session = requests.Session()
+session.headers.update(HEADERS)
 
 DASHBOARD_DATA = {
     "ultimo_aggiornamento": "Mai",
@@ -74,7 +81,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #080c14; color: #ffffff; margin:0; padding:20px; }}
                     .container {{ max-width: 1600px; margin: 0 auto; }}
                     
-                    /* Header Contrasto */
                     .header {{ background: #111c36; padding: 22px 30px; border-radius: 12px; border: 2px solid #253b6e; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }}
                     h1 {{ color: #ffffff; margin: 0; font-size: 25px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }}
                     .status-bar {{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }}
@@ -83,7 +89,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .badge span {{ color: #388bfd; font-weight: 900; font-family: monospace; font-size: 15px; }}
                     .badge-online {{ background: #1f4225; color: #4af262; border-color: #2ea44f; }}
 
-                    /* Controlli di Ricerca */
                     .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #111c36; border: 2px solid #253b6e; padding: 20px; border-radius: 12px; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
                     .search-box {{ background: #03060d; border: 2px solid #388bfd; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-size: 15px; width: 350px; font-weight: 700; }}
                     .search-box::placeholder {{ color: #8ba2c1; }}
@@ -93,7 +98,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     .badge-container {{ display: flex; gap: 6px; flex-wrap: wrap; }}
                     .db-league-badge {{ background: #388bfd; color: #ffffff; font-weight: 900; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffffff; display: inline-block; }}
 
-                    /* Tabelle e Pannelli */
                     .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
                     @media (max-width: 1200px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
                     
@@ -116,7 +120,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     
                     .analysis-cell {{ font-size: 14px; color: #ffffff; line-height: 1.6; white-space: pre-line; background: #111c36; padding: 14px; border-radius: 8px; border-left: 5px solid #388bfd; border: 1px solid #253b6e; }}
                     
-                    /* Messaggi di Stato Persistenti */
                     .state-row-message {{ text-align: center; color: #a2b4ce; padding: 45px; font-style: italic; font-size: 15px; font-weight: 600; }}
                     .no-match-found {{ text-align: center; color: #ff6b6b; padding: 30px; font-weight: 700; font-size: 15px; display: none; background: rgba(255, 107, 107, 0.1); border-radius: 8px; margin-top: 10px; border: 1px dashed #ff6b6b; }}
                     
@@ -192,7 +195,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             document.getElementById('count-alerts').innerText = data.alert_inviati_totale;
                             document.getElementById('time-updated').innerText = data.ultimo_aggiornamento;
                             
-                            // Aggiornamento sicuro Live
                             const liveTbody = document.getElementById('live-tbody');
                             if(!data.match_rilevanti || data.match_rilevanti.length === 0) {{
                                 liveTbody.innerHTML = `<tr id="live-state-row"><td colspan='4' class="state-row-message">📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>`;
@@ -219,7 +221,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                 liveTbody.innerHTML = liveHtml;
                             }}
                             
-                            // Aggiornamento sicuro Prematch
                             const futureTbody = document.getElementById('future-tbody');
                             if(!data.match_futuri || data.match_futuri.length === 0) {{
                                 futureTbody.innerHTML = `<tr id="future-state-row"><td colspan='3' class="state-row-message">📅 Nessun match in archivio programmato per le prossime ore della data attuale.</td></tr>`;
@@ -243,15 +244,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             filterTables();
                             
                         }} catch(err) {{
-                            console.log("Errore caricamento dati:", err);
+                            console.log("Errore caricamento api:", err);
                         }}
                     }}
 
-                    // Funzione di scansione e filtraggio incrociato delle tabelle
                     function filterTables() {{
                         let query = document.getElementById('searchBar').value.toLowerCase();
                         
-                        // Scansione Pannello LIVE
                         let liveRows = document.querySelectorAll('#live-tbody .searchable-row');
                         let liveStateRow = document.getElementById('live-state-row');
                         let liveNoResults = document.getElementById('live-no-results');
@@ -268,14 +267,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
                         if (query.length > 0) {{
                             if (liveStateRow) liveStateRow.style.display = "none";
-                            // Se ci sono righe ma nessuna corrisponde, o se la tabella era vuota
                             liveNoResults.style.display = (liveVisibili === 0) ? "block" : "none";
                         }} else {{
                             if (liveStateRow) liveStateRow.style.display = "";
                             liveNoResults.style.display = "none";
                         }}
 
-                        // Scansione Pannello PREMATCH
                         let futureRows = document.querySelectorAll('#future-tbody .searchable-row');
                         let futureStateRow = document.getElementById('future-state-row');
                         let futureNoResults = document.getElementById('future-no-results');
@@ -373,7 +370,8 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
 
 def scansione_prematch():
     try:
-        response = requests.get(URL_FUTURE, headers=HEADERS, timeout=10)
+        # Timeout impostato a 60 secondi
+        response = session.get(URL_FUTURE, timeout=60)
         if response.status_code == 200:
             dati = response.json()
             partite = dati.get("Value", [])
@@ -402,7 +400,8 @@ def scansione_prematch():
 
 def scansione_partite_live():
     try:
-        response = requests.get(URL_LIVE, headers=HEADERS, timeout=10)
+        # Timeout impostato a 60 secondi
+        response = session.get(URL_LIVE, timeout=60)
         if response.status_code == 200:
             dati = response.json()
             partite = dati.get("Value", [])
