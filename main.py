@@ -484,3 +484,9 @@ def invia_telegram(messaggio):
 
 if __name__ == "__main__":
     Thread(target=finto_server, daemon=True).start()
+    print("Millenium Bot attivo!", flush=True)
+    
+    while True:
+        scansione_partite_live()
+        scansione_prematch()
+        time.sleep(60)
