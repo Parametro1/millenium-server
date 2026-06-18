@@ -14,25 +14,38 @@ TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
+DATA_FILE = "dashboard_data.json"
 
-# Headers potenziati anti-blocco per emulare un browser reale
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
 }
 
-# Sessione persistente per mantenere la connessione attiva ed evitare i drop di rete
 session = requests.Session()
 session.headers.update(HEADERS)
 
-DASHBOARD_DATA = {
-    "ultimo_aggiornamento": "Mai",
-    "partite_scansionate": 0,
-    "alert_inviati_totale": 0,
-    "match_rilevanti": [],
-    "match_futuri": []
-}
+# Caricamento iniziale persistente da file per evitare lo svuotamento al riavvio
+if os.path.exists(DATA_FILE):
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            DASHBOARD_DATA = json.load(f)
+    except Exception:
+        DASHBOARD_DATA = {
+            "ultimo_aggiornamento": "Mai",
+            "partite_scansionate": 0,
+            "alert_inviati_totale": 0,
+            "match_rilevanti": [],
+            "match_futuri": []
+        }
+else:
+    DASHBOARD_DATA = {
+        "ultimo_aggiornamento": "Mai",
+        "partite_scansionate": 0,
+        "alert_inviati_totale": 0,
+        "match_rilevanti": [],
+        "match_futuri": []
+    }
 
 DIZIONARIO_CAMPIONATI = {
     "Calcio. Inghilterra. Premier League": "E0",
@@ -51,6 +64,13 @@ DIZIONARIO_CAMPIONATI = {
 }
 
 CAMPIONATI_ALL = ["E0", "D2", "E1", "I2", "SP1", "I1", "N1", "F2", "T1", "USA", "F1", "D1", "SP2"]
+
+def salva_dati_su_file():
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(DASHBOARD_DATA, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Errore salvataggio file JSON: {e}", flush=True)
 
 class DashboardHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args): 
@@ -370,7 +390,6 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
 
 def scansione_prematch():
     try:
-        # Timeout impostato a 60 secondi
         response = session.get(URL_FUTURE, timeout=60)
         if response.status_code == 200:
             dati = response.json()
@@ -395,12 +414,12 @@ def scansione_prematch():
                         "analisi": consiglio_match
                     })
             DASHBOARD_DATA["match_futuri"] = prossimi_match[:15]
+            salva_dati_su_file()
     except Exception as e:
         print(f"Errore scansione prematch: {e}", flush=True)
 
 def scansione_partite_live():
     try:
-        # Timeout impostato a 60 secondi
         response = session.get(URL_LIVE, timeout=60)
         if response.status_code == 200:
             dati = response.json()
@@ -470,6 +489,7 @@ def scansione_partite_live():
                         DASHBOARD_DATA["alert_inviati_totale"] += 1
                         time.sleep(5)
             DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti if nuovi_match_rilevanti else []
+            salva_dati_su_file()
     except Exception as e:
         print(f"Errore live: {e}", flush=True)
 
