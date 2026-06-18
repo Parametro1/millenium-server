@@ -71,51 +71,53 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 <title>Millenium — Trading Intelligence Hub</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #0b0f19; color: #f0f4f8; margin:0; padding:20px; }}
+                    body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #080c14; color: #ffffff; margin:0; padding:20px; }}
                     .container {{ max-width: 1600px; margin: 0 auto; }}
                     
-                    /* Header Ad Alto Contrasto */
-                    .header {{ background: #16223f; padding: 20px 30px; border-radius: 12px; border: 1px solid #2d4373; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }}
-                    h1 {{ color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }}
+                    /* Header Ultra Contrasto */
+                    .header {{ background: #111c36; padding: 22px 30px; border-radius: 12px; border: 2px solid #253b6e; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }}
+                    h1 {{ color: #ffffff; margin: 0; font-size: 25px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }}
                     .status-bar {{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }}
                     
-                    .badge {{ background: #0b1120; color: #ffffff; padding: 8px 14px; border-radius: 8px; border: 1px solid #2d4373; font-size: 13px; font-weight: 600; }}
-                    .badge span {{ color: #388bfd; font-weight: bold; font-family: monospace; }}
-                    .badge-online {{ background: rgba(56, 139, 253, 0.2); color: #58a6ff; border-color: #388bfd; }}
+                    .badge {{ background: #050912; color: #ffffff; padding: 10px 16px; border-radius: 8px; border: 2px solid #253b6e; font-size: 14px; font-weight: 700; }}
+                    .badge span {{ color: #388bfd; font-weight: 900; font-family: monospace; font-size: 15px; }}
+                    .badge-online {{ background: #1f4225; color: #4af262; border-color: #2ea44f; }}
 
-                    /* Barra di Controllo con Elementi Ben Distinti */
-                    .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #16223f; border: 1px solid #2d4373; padding: 20px; border-radius: 12px; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
-                    .search-box {{ background: #070a12; border: 2px solid #388bfd; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-size: 14px; width: 350px; font-weight: 600; }}
-                    .search-box::placeholder {{ color: #a0aec0; }}
+                    /* Barra di Controllo Bilanciata */
+                    .controls-panel {{ display: flex; justify-content: space-between; align-items: center; background: #111c36; border: 2px solid #253b6e; padding: 20px; border-radius: 12px; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
+                    .search-box {{ background: #03060d; border: 2px solid #388bfd; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-size: 15px; width: 350px; font-weight: 700; }}
+                    .search-box::placeholder {{ color: #8ba2c1; }}
                     
                     .db-info {{ display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }}
-                    .db-title {{ font-size: 14px; color: #ffffff; font-weight: 700; text-transform: uppercase; }}
+                    .db-title {{ font-size: 14px; color: #ffffff; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }}
                     .badge-container {{ display: flex; gap: 6px; flex-wrap: wrap; }}
-                    .db-league-badge {{ background: #388bfd; color: #ffffff; font-weight: 800; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffffff; display: inline-block; }}
+                    .db-league-badge {{ background: #388bfd; color: #ffffff; font-weight: 900; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffffff; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
 
-                    /* Struttura Tabelle */
+                    /* Layout delle Tabelle Rinforzato */
                     .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
                     @media (max-width: 1200px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
                     
-                    .panel {{ background: #111827; border-radius: 12px; border: 1px solid #1f2937; padding: 20px; }}
-                    h2 {{ font-size: 18px; font-weight: 700; margin-top: 0; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1f2937; }}
-                    .live-title {{ color: #f87171; }}
-                    .future-title {{ color: #fbbf24; }}
+                    .panel {{ background: #0d1527; border-radius: 12px; border: 2px solid #1e2d4a; padding: 22px; }}
+                    h2 {{ font-size: 19px; font-weight: 800; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #1e2d4a; text-transform: uppercase; }}
+                    .live-title {{ color: #ff6b6b; }}
+                    .future-title {{ color: #ffd166; }}
                     
                     table {{ width: 100%; border-collapse: separate; border-spacing: 0; }}
-                    th {{ background-color: #1f2937; color: #ffffff; text-align: left; padding: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #374151; }}
-                    td {{ padding: 14px 12px; border-bottom: 1px solid #1f2937; color: #e5e7eb; vertical-align: top; }}
-                    tr.searchable-row:hover td {{ background-color: #1f2937; }}
+                    th {{ background-color: #16223f; color: #ffffff; text-align: left; padding: 14px 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; border-bottom: 3px solid #253b6e; letter-spacing: 0.5px; }}
+                    td {{ padding: 16px 12px; border-bottom: 1px solid #1e2d4a; color: #ffffff; vertical-align: top; font-size: 14px; }}
+                    tr.searchable-row:hover td {{ background-color: #16223f; }}
                     
-                    .time-badge {{ background: rgba(248, 113, 113, 0.2); color: #f87171; padding: 4px 8px; border-radius: 6px; font-weight: 700; border: 1px solid #f87171; display: inline-block; }}
-                    .time-badge.future {{ background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }}
-                    .match-team {{ font-weight: 700; font-size: 15px; color: #ffffff; margin-bottom: 5px; }}
-                    .score-badge {{ font-size: 12px; color: #fca5a5; background: rgba(220, 38, 38, 0.2); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 5px; font-weight: 600; }}
-                    .league-text {{ font-size: 12px; color: #9ca3af; }}
-                    .analysis-cell {{ font-size: 13px; color: #f3f4f6; line-height: 1.5; white-space: pre-line; background: #1f2937; padding: 12px; border-radius: 6px; border-left: 4px solid #388bfd; }}
+                    .time-badge {{ background: #451a1a; color: #ff6b6b; padding: 6px 10px; border-radius: 6px; font-weight: 800; border: 2px solid #ff6b6b; display: inline-block; font-size: 13px; }}
+                    .time-badge.future {{ background: #3b2f11; color: #ffd166; border: 2px solid #ffd166; }}
                     
-                    b {{ color: #60a5fa; font-weight: 700; }}
-                    i {{ color: #9ca3af; font-style: italic; }}
+                    .match-team {{ font-weight: 800; font-size: 16px; color: #ffffff; margin-bottom: 6px; }}
+                    .score-badge {{ font-size: 13px; color: #ff8787; background: #3b1717; padding: 4px 10px; border-radius: 5px; border: 1px solid #ff6b6b; display: inline-block; margin-bottom: 6px; font-weight: 700; }}
+                    .league-text {{ font-size: 13px; color: #a2b4ce; font-weight: 600; }}
+                    
+                    .analysis-cell {{ font-size: 14px; color: #ffffff; line-height: 1.6; white-space: pre-line; background: #111c36; padding: 14px; border-radius: 8px; border-left: 5px solid #388bfd; border-top: 1px solid #253b6e; border-right: 1px solid #253b6e; border-bottom: 1px solid #253b6e; }}
+                    
+                    b {{ color: #4da3ff; font-weight: 800; background: rgba(56, 139, 253, 0.15); padding: 1px 4px; border-radius: 3px; }}
+                    i {{ color: #cbd5e1; font-style: italic; }}
                 </style>
             </head>
             <body>
@@ -123,7 +125,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     <div class="header">
                         <h1>⚡ Millenium Intelligence Dashboard</h1>
                         <div class="status-bar">
-                            <div class="badge badge-online">Radar Attivo</div>
+                            <div class="badge badge-online">🟢 Radar Attivo</div>
                             <div class="badge">In Play: <span id="count-scanned">0</span></div>
                             <div class="badge">Alert Telegram: <span id="count-alerts">0</span></div>
                             <div class="badge">Aggiornato: <span id="time-updated">Mai</span></div>
@@ -151,7 +153,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                     </tr>
                                 </thead>
                                 <tbody id="live-tbody">
-                                    <tr id="live-state-row"><td colspan='4' style='text-align:center; color:#9ca3af; padding:40px; font-style:italic;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>
+                                    <tr id="live-state-row"><td colspan='4' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight: 600;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -167,7 +169,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                     </tr>
                                 </thead>
                                 <tbody id="future-tbody">
-                                    <tr id="future-state-row"><td colspan='3' style='text-align:center; color:#9ca3af; padding:40px; font-style:italic;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>
+                                    <tr id="future-state-row"><td colspan='3' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight: 600;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -184,10 +186,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             document.getElementById('count-alerts').innerText = data.alert_inviati_totale;
                             document.getElementById('time-updated').innerText = data.ultimo_aggiornamento;
                             
-                            // Gestione sicura righe Live
+                            // Gestione righe Live
                             const liveTbody = document.getElementById('live-tbody');
-                            if(data.match_rilevanti.length === 0) {{
-                                liveTbody.innerHTML = `<tr id="live-state-row"><td colspan='4' style='text-align:center; color:#9ca3af; padding:40px; font-style:italic;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>`;
+                            if(!data.match_rilevanti || data.match_rilevanti.length === 0) {{
+                                liveTbody.innerHTML = `<tr id="live-state-row"><td colspan='4' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight:600;'>📡 In attesa di match live che soddisfino i criteri dei tiri in porta...</td></tr>`;
                             }} else {{
                                 let liveHtml = "";
                                 data.match_rilevanti.forEach(m => {{
@@ -201,7 +203,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                                 <div class="score-badge">Risultato: ${{m.punteggio}}</div>
                                                 <div class="league-text">🏆 ${{m.campionato}}</div>
                                             </td>
-                                            <td style="text-align:center; color:#3fb950; font-weight:bold; font-size:15px;">
+                                            <td style="text-align:center; color:#4af262; font-weight:bold; font-size:16px;">
                                                 <span>${{icon}}</span>${{m.tiri}}
                                             </td>
                                             <td class="analysis-cell">${{m.analisi}}</td>
@@ -211,10 +213,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                                 liveTbody.innerHTML = liveHtml;
                             }}
                             
-                            // Gestione sicura righe Prematch
+                            // Gestione righe Prematch
                             const futureTbody = document.getElementById('future-tbody');
-                            if(data.match_futuri.length === 0) {{
-                                futureTbody.innerHTML = `<tr id="future-state-row"><td colspan='3' style='text-align:center; color:#9ca3af; padding:40px; font-style:italic;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>`;
+                            if(!data.match_futuri || data.match_futuri.length === 0) {{
+                                futureTbody.innerHTML = `<tr id="future-state-row"><td colspan='3' style='text-align:center; color:#a2b4ce; padding:45px; font-style:italic; font-size:15px; font-weight:600;'>📅 Nessun match in archivio programmato per le prossime ore.</td></tr>`;
                             }} else {{
                                 let futureHtml = "";
                                 data.match_futuri.forEach(mf => {{
@@ -239,7 +241,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         }}
                     }}
 
-                    // Filtra solo le righe dei match, evitando conflitti se vuoto
                     function filterTables() {{
                         let query = document.getElementById('searchBar').value.toLowerCase();
                         let rows = document.querySelectorAll('.searchable-row');
@@ -425,7 +426,7 @@ def scansione_partite_live():
                         invia_telegram(messaggio)
                         DASHBOARD_DATA["alert_inviati_totale"] += 1
                         time.sleep(5)
-            DASHBOARD_DATA["match_rilevanti"] = nuevos_match_rilevanti if nuovi_match_rilevanti else []
+            DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti if nuovi_match_rilevanti else []
     except Exception as e:
         print(f"Errore live: {e}", flush=True)
 
