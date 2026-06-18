@@ -42,7 +42,7 @@ DIZIONARIO_CAMPIONATI = {
 }
 
 # =======================================================
-# VERA DASHBOARD WEB PER MONITORAGGIO SU PC
+# DASHBOARD WEB PROFESSIONALE (STILE TRADING)
 # =======================================================
 class DashboardHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args): 
@@ -57,31 +57,36 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             # 1. Costruzione tabella LIVE
             righe_live = ""
             if not DASHBOARD_DATA["match_rilevanti"]:
-                righe_live = "<tr><td colspan='5' style='text-align:center; color:#8b949e;'>Nessun match live con tiri significativi rilevato.</td></tr>"
+                righe_live = "<tr><td colspan='4' style='text-align:center; color:#6e7681; padding:30px;'>Nessun match live con tiri significativi rilevato.</td></tr>"
             else:
                 for m in DASHBOARD_DATA["match_rilevanti"]:
                     righe_live += f"""
                     <tr>
-                        <td><b>{m['orario']}</b></td>
-                        <td style='color:#58a6ff;'><b>{m['partita']}</b><br><small style='color:#ffa198;'>Risultato: {m['punteggio']}</small></td>
-                        <td><span style='background:#21262d; padding:2px 6px; border-radius:4px;'>{m['campionato']}</span></td>
-                        <td style='color:#56d364; font-weight:bold;'>{m['tiri']}</td>
-                        <td style='font-size:12px; white-space:pre-line;'>{m['analisi']}</td>
+                        <td style='text-align:center;'><span class='time-badge'>{m['orario']}</span></td>
+                        <td>
+                            <div class='match-team'>{m['partita']}</div>
+                            <div class='score-badge'>Risultato: {m['punteggio']}</div>
+                            <div class='league-text'>{m['campionato']}</div>
+                        </td>
+                        <td style='text-align:center; color:#3fb950; font-weight:bold; font-size:15px;'>{m['tiri']}</td>
+                        <td class='analysis-cell'>{m['analisi']}</td>
                     </tr>
                     """
 
             # 2. Costruzione tabella MATCH FUTURI
             righe_future = ""
             if not DASHBOARD_DATA["match_futuri"]:
-                righe_future = "<tr><td colspan='4' style='text-align:center; color:#8b949e;'>Nessun match in programma nelle prossime ore per i campionati in archivio.</td></tr>"
+                righe_future = "<tr><td colspan='3' style='text-align:center; color:#6e7681; padding:30px;'>Nessun match in programma nelle prossime ore per i campionati in archivio.</td></tr>"
             else:
                 for mf in DASHBOARD_DATA["match_futuri"]:
                     righe_future += f"""
                     <tr>
-                        <td style='color:#ffa198;'><b>{mf['data_ora']}</b></td>
-                        <td><b>{mf['partita']}</b></td>
-                        <td><span style='background:#21262d; padding:2px 6px; border-radius:4px;'>{mf['campionato']}</span></td>
-                        <td style='font-size:12px; white-space:pre-line;'>{mf['analisi']}</td>
+                        <td style='text-align:center;'><span class='time-badge future'>{mf['data_ora']}</span></td>
+                        <td>
+                            <div class='match-team'>{mf['partita']}</div>
+                            <div class='league-text'>{mf['campionato']}</div>
+                        </td>
+                        <td class='analysis-cell'>{mf['analisi']}</td>
                     </tr>
                     """
 
@@ -89,65 +94,104 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Millenium Bot - Monitor Avanzato</title>
+                <title>Millenium Bot - Pro Dashboard</title>
                 <meta http-equiv="refresh" content="30">
                 <style>
-                    body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; margin:0; padding:20px; }}
-                    .container {{ max-width: 1200px; margin: 0 auto; }}
-                    .header {{ background: linear-gradient(135deg, #1f2937, #111827); padding: 20px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 25px; }}
-                    h1 {{ color: #58a6ff; margin: 0 0 10px 0; font-size: 24px; }}
-                    .status-bar {{ display: flex; gap: 20px; font-size: 14px; color: #8b949e; }}
-                    .badge {{ background-color: rgba(56, 139, 253, 0.15); color: #58a6ff; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(56, 139, 253, 0.4); font-weight: bold; }}
-                    .badge-online {{ background-color: rgba(53, 222, 101, 0.15); color: #56d364; border: 1px solid rgba(53, 222, 101, 0.4); }}
-                    h2 {{ color: #58a6ff; font-size: 18px; border-left: 4px solid #1f6feb; padding-left: 10px; margin-top: 30px; margin-bottom: 10px; }}
-                    h2.future-title {{ color: #ffa198; border-left: 4px solid #f85149; }}
-                    table {{ width: 100%; border-collapse: collapse; margin-bottom: 30px; background-color: #161b22; border-radius: 8px; overflow: hidden; border: 1px solid #30363d; }}
-                    th {{ background-color: #21262d; color: #58a6ff; text-align: left; padding: 12px; border-bottom: 1px solid #30363d; font-size: 13px; }}
-                    td {{ padding: 12px; border-bottom: 1px solid #30363d; font-size: 13px; }}
+                    body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: #0d1117; color: #c9d1d9; margin:0; padding:25px; }}
+                    .container {{ max-width: 1600px; margin: 0 auto; }}
+                    
+                    /* Header Professionale */
+                    .header {{ background: #161b22; padding: 20px 30px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }}
+                    h1 {{ color: #f0f6fc; margin: 0; font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }}
+                    .status-bar {{ display: flex; gap: 15px; align-items: center; }}
+                    .badge {{ background: #21262d; color: #c9d1d9; padding: 6px 12px; border-radius: 6px; border: 1px solid #30363d; font-size: 13px; font-weight: 500; }}
+                    .badge span {{ color: #58a6ff; font-weight: bold; }}
+                    .badge-online {{ background: rgba(56, 139, 253, 0.1); color: #58a6ff; border-color: rgba(56, 139, 253, 0.3); animation: pulse 2s infinite; }}
+
+                    /* Layout Bifronte (Due Colonne Side-by-Side) */
+                    .dashboard-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }}
+                    @media (max-width: 1100px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
+                    
+                    .panel {{ background: #161b22; border-radius: 12px; border: 1px solid #30363d; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }}
+                    h2 {{ font-size: 16px; font-weight: 600; margin-top: 0; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #21262d; display: flex; align-items: center; gap: 8px; }}
+                    .live-title {{ color: #ff5252; }}
+                    .future-title {{ color: #ffab40; }}
+                    
+                    /* Tabelle in Stile Card */
+                    table {{ width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 10px; }}
+                    th {{ background-color: #21262d; color: #8b949e; text-align: left; padding: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #30363d; }}
+                    th:first-child {{ border-top-left-radius: 6px; }}
+                    th:last-child {{ border-top-right-radius: 6px; }}
+                    td {{ padding: 14px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }}
+                    tr:last-child td {{ border-bottom: none; }}
                     tr:hover td {{ background-color: #1f242c; }}
+                    
+                    /* Elementi di Dettaglio */
+                    .time-badge {{ background: rgba(248, 81, 73, 0.1); color: #ff5252; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; border: 1px solid rgba(248, 81, 73, 0.2); display: inline-block; }}
+                    .time-badge.future {{ background: rgba(255, 171, 64, 0.1); color: #ffab40; border: 1px solid rgba(255, 171, 64, 0.2); }}
+                    .match-team {{ font-weight: 600; font-size: 14px; color: #f0f6fc; margin-bottom: 4px; }}
+                    .score-badge {{ font-size: 11px; color: #ffa198; background: rgba(255, 161, 152, 0.05); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; border: 1px solid rgba(255, 161, 152, 0.1); }}
+                    .league-text {{ font-size: 11px; color: #8b949e; }}
+                    .analysis-cell {{ font-size: 12px; color: #c9d1d9; line-height: 1.5; white-space: pre-line; }}
+                    
+                    /* Evidenziatori di Consigli */
+                    b {{ color: #58a6ff; font-weight: 600; }}
+                    i {{ color: #8b949e; font-style: italic; }}
+                    
+                    @keyframes pulse {{
+                        0% {{ opacity: 0.8; }}
+                        50% {{ opacity: 1; }}
+                        100% {{ opacity: 0.8; }}
+                    }}
                 </style>
             </head>
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🖥️ Centro Controllo Millenium Bot</h1>
+                        <h1>💻 Millenium Intelligence — Centro Controllo</h1>
                         <div class="status-bar">
-                            <span>Radar: <span class="badge badge-online">🟢 ONLINE</span></span>
-                            <span>Match nel Palinsesto Live: <span class="badge">{DASHBOARD_DATA["partite_scansionate"]}</span></span>
-                            <span>Ultimo Screening: <span class="badge">{DASHBOARD_DATA["ultimo_aggiornamento"]}</span></span>
+                            <div class="badge badge-online">● RADAR LIVE ACCESO</div>
+                            <div class="badge">Palinsesto: <span>{DASHBOARD_DATA["partite_scansionate"]}</span></div>
+                            <div class="badge">Aggiornato: <span>{DASHBOARD_DATA["ultimo_aggiornamento"]}</span></div>
                         </div>
                     </div>
                     
-                    <h2>🔥 1. Partite in Corso (LIVE con analisi andamento e minuto)</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 10%;">Minuto</th>
-                                <th style="width: 25%;">Partita / Risultato</th>
-                                <th style="width: 25%;">Campionato</th>
-                                <th style="width: 15%;">Tiri in Porta</th>
-                                <th style="width: 25%;">Analisi Dinamica Live</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {righe_live}
-                        </tbody>
-                    </table>
-
-                    <h2 class="future-title">📅 2. Palinsesto Prossime Ore (Pre-Match con studio automatico)</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 15%;">Data e Ora Inizio</th>
-                                <th style="width: 30%;">Partita (Club)</th>
-                                <th style="width: 30%;">Campionato</th>
-                                <th style="width: 25%;">Studio Preventivo Match</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {righe_future}
-                        </tbody>
-                    </table>
+                    <div class="dashboard-grid">
+                        
+                        <div class="panel">
+                            <h2 class="live-title">🔥 Partite in Corso (Statistiche Real-Time)</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%; text-align:center;">Minuto</th>
+                                        <th style="width: 40%;">Squadre / Torneo</th>
+                                        <th style="width: 15%; text-align:center;">Tiri Porta</th>
+                                        <th style="width: 30%;">Consiglio Dinamico</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {righe_live}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="panel">
+                            <h2 class="future-title">📅 Prossime Ore (Studio Preventivo Archivio)</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%; text-align:center;">Calcio Inizio</th>
+                                        <th style="width: 45%;">Squadre / Campionato</th>
+                                        <th style="width: 35%;">Studio Algoritmo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {righe_future}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    </div>
                 </div>
             </body>
             </html>
@@ -190,30 +234,26 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
             
             somma_medie = media_casa + media_fuori
             
-            # SEZIONE 1: LOGICA DINAMICA PER PARTITE IN CORSO (LIVE)
             if is_live and minuto is not None:
-                output += f"⏱️ Analisi al minuto {minuto}' (Punteggio con {gol_totali} Gol):\n"
-                
+                output += f"📋 Analisi al minuto {minuto}':\n"
                 if somma_medie >= 2.40:
                     if minuto <= 35:
-                        output += "💰 <b>CONSIGLIO: OVER 0.5 HT (Entra se quota > 1.70)</b>"
+                        output += "💰 <b>CONSIGLIO: OVER 0.5 HT (Quota > 1.70)</b>"
                     elif minuto > 35 and minuto <= 65:
-                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 1.5} LIVE (Entra se quota > 1.80)</b>"
+                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 1.5} LIVE (Quota > 1.80)</b>"
                     elif minuto > 65 and minuto <= 82:
-                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 0.5} FINALE (Pressione ultimi minuti)</b>"
+                        output += f"💰 <b>CONSIGLIO: OVER {gol_totali + 0.5} FINALE (Pressione)</b>"
                     else:
-                        output += "⚠️ <i>CONSIGLIO: No Bet (Troppo tardi)</i>"
+                        output += "⚠️ <i>CONSIGLIO: No Bet (Fine match)</i>"
                 else:
-                    output += "⚠️ <i>CONSIGLIO: No Bet (Storico debole per gol live)</i>"
-            
-            # SEZIONE 2: LOGICA PER PARTITE FUTURE (PRE-MATCH)
+                    output += "⚠️ <i>CONSIGLIO: No Bet (Storico basso)</i>"
             else:
                 if somma_medie >= 3.20:
-                    output += "💰 <b>STUDIO: Forte pendenza OVER 2.5</b>"
+                    output += "💰 <b>STUDIO: Pendenza OVER 2.5</b>"
                 elif somma_medie >= 2.40:
-                    output += "💰 <b>STUDIO: Ottimo per OVER 1.5 Pre-Match</b>"
+                    output += "💰 <b>STUDIO: Ottimo OVER 1.5</b>"
                 elif somma_medie > 0:
-                    output += "⚠️ <i>STUDIO: Match da Under o No Bet</i>"
+                    output += "⚠️ <i>STUDIO: Match da Under</i>"
                 else:
                     output = "Dati storici insufficienti."
                 
@@ -298,7 +338,7 @@ def scansione_partite_live():
                             "partita": f"{squadra_casa} - {squadra_ospite}",
                             "punteggio": stringa_punteggio,
                             "campionato": campionato_live,
-                            "tiri": f"{tiri_totali_live} ({tiri_porta_casa}-{tiri_porta_ospite})",
+                            "tiri": f"{tiri_totali_live}",
                             "analisi": consiglio_live
                         })
                     
@@ -313,20 +353,20 @@ def scansione_partite_live():
                             f"*MILLENIUM BOT - COPERTURA LIVE VALUTATA*\n\n"
                             f"⚽ *Match:* {squadra_casa} - {squadra_ospite} ({stringa_punteggio})\n"
                             f"🏆 *Torneo:* {campionato_live}\n"
-                            f"⏱️ *Minuto di Gioco:* {minuto_corrente}' minuto\n\n"
+                            f"⏱️ *Minuto:* {minuto_corrente}' minuto\n\n"
                             f"🎯 *STATISTICHE LIVE:* Tiri totali {tiri_totali_live} ({tiri_porta_casa}-{tiri_porta_ospite})\n\n"
                             f"📊 *STUDIO DINAMICO PROGETTATO:*\n{consiglio_text}\n\n"
                             f"🍀 _Attendi che la quota di mercato tocchi il valore consigliato sul tuo bookmaker prima di piazzare!_"
                         )
                         invia_telegram(messaggio)
                         time.sleep(5)
-            DASHBOARD_DATA["match_rilevanti"] = nuevos_match_rilevanti
+            DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
     except Exception as e:
         print(f"Errore live: {e}", flush=True)
 
 def invia_telegram(messaggio):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": mensaje, "parse_mode": "Markdown"}
+    payload = {"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "Markdown"}
     try:
         requests.post(url, json=payload)
     except Exception:
