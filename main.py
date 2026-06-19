@@ -27,7 +27,6 @@ session.headers.update(HEADERS)
 adapter = requests.adapters.HTTPAdapter(max_retries=2)
 session.mount("https://", adapter)
 
-# Inizializzazione del dizionario dati per la Dashboard
 DASHBOARD_DATA = {
     "ultimo_aggiornamento": "Mai",
     "partite_scansionate": 0,
@@ -65,12 +64,10 @@ def salva_dati_su_file():
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(DASHBOARD_DATA, f, ensure_ascii=False, indent=4)
     except Exception as e:
-        print(f"Errore scrittura JSON: {e}", flush=True)
+        print(f"Errore JSON: {e}", flush=True)
 
 class DashboardHandler(SimpleHTTPRequestHandler):
-    def log_message(self, format, *args): 
-        return
-        
+    def log_message(self, format, *args): return
     def do_GET(self):
         if self.path == "/api/data":
             self.send_response(200)
@@ -78,87 +75,107 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(DASHBOARD_DATA).encode("utf-8"))
             return
-            
         if self.path == "/":
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            # Interfaccia pulita senza righe multilinea lunghe soggette a errori di codifica
-            res = "<html><head><title>Terminal</title></head><body style='font-family:sans-serif; background:#0d1117; color:#c9d1d9; padding:20px;'>"
-            res += "<h1>⚡ Millenium Monitoring Terminal ⚡</h1>"
-            res += f"<p><b>Ultimo Aggiornamento:</b> {DASHBOARD_DATA['ultimo_aggiornamento']}</p>"
-            res += f"<p><b>Partite Scansionate Live:</b> {DASHBOARD_DATA['partite_scansionate']}</p>"
-            res += f"<p><b>Alert Inviati Telegram:</b> {DASHBOARD_DATA['alert_inviati_totale']}</p>"
-            res += "<h2>Match Live Monitorati</h2><ul>"
+            # Costruzione sicura riga per riga per evitare bug di sintassi
+            res = "<html><head><meta charset='utf-8'><title>Millenium Terminal</title>"
+            res += "<style>"
+            res += "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0f19; color: #e2e8f0; margin: 0; padding: 20px; }"
+            res += ".container { max-width: 1200px; margin: 0 auto; }"
+            res += "h1 { color: #38bdf8; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }"
+            res += ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }"
+            res += ".card { background: #111827; border: 1px solid #1e293b; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); }"
+            res += ".card h3 { margin: 0 0 10px 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }"
+            res += ".card .value { font-size: 24px; font-weight: bold; color: #f8fafc; }"
+            res += ".card .highlight { color: #10b981; }"
+            res += "h2 { color: #f1f5f9; font-size: 20px; margin-top: 40px; margin-bottom: 15px; }"
+            res += "table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; }"
+            res += "th { background: #1e293b; color: #38bdf8; text-align: left; padding: 12px 15px; font-size: 14px; }"
+            res += "td { padding: 12px 15px; border-bottom: 1px solid #1e293b; font-size: 14px; color: #cbd5e1; }"
+            res += "tr:last-child td { border-bottom: none; }"
+            res += "tr:hover { background: #1f2937; }"
+            res += ".badge { background: #0284c7; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }"
+            res += ".badge-live { background: #dc2626; animation: pulse 2s infinite; }"
+            res += "@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }"
+            res += "</style></head><body><div class='container'>"
             
+            res += "<h1><span>⚡ MILLENIUM TERMINAL</span> <span style='font-size:14px;color:#64748b;'>v2.5 Stable</span></h1>"
+            
+            # Griglia Statistiche
+            res += "<div class='stats-grid'>"
+            res += f"<div class='card'><h3>Ultimo Aggiornamento</h3><div class='value'>{DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
+            res += f"<div class='card'><h3>Match Live Scansionati</h3><div class='value highlight'>{DASHBOARD_DATA['partite_scansionate']}</div></div>"
+            res += f"<div class='card'><h3>Alert Telegram Inviati</h3><div class='value' style='color:#38bdf8;'>{DASHBOARD_DATA['alert_inviati_totale']}</div></div>"
+            res += "</div>"
+            
+            # Tabella Live
+            res += "<h2>🔥 Match Live Sotto Osservazione</h2>"
             if not DASHBOARD_DATA["match_rilevanti"]:
-                res += "<li>Nessun match attivo soddisfa i criteri minimi in questo istante.</li>"
+                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;'>Nessun match attivo soddisfa i criteri minimi in questo istante.</div>"
             else:
+                res += "<table><thead><tr><th>Tempo</th><th>Incontro</th><th>Punteggio</th><th>Analisi & Consiglio Strategico</th></tr></thead><tbody>"
                 for m in DASHBOARD_DATA["match_rilevanti"]:
-                    res += f"<li><b>{m['partita']}</b> ({m['orario']}) - Punteggio: {m['punteggio']}<br>{m['analisi']}</li>"
+                    res += f"<tr><td><span class='badge badge-live'>{m['orario']}</span></td><td><b>{m['partita']}</b><br><span style='font-size:11px;color:#64748b;'>{m.get('campionato','-')}</span></td><td><span style='font-family:monospace;font-weight:bold;color:#f59e0b;'>{m['punteggio']}</span></td><td>{m['analisi']}</td></tr>"
+                res += "</tbody></table>"
             
-            res += "<h2>Palinsesto Prematch Analizzato</h2><ul>"
+            # Tabella Prematch
+            res += "<h2>📅 Prossimi Match in Palinsesto</h2>"
             if not DASHBOARD_DATA.get("match_futuri"):
-                res += "<li>Nessun match futuro in archivio.</li>"
+                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;'>Nessun match futuro programmato in archivio.</div>"
             else:
+                res += "<table><thead><tr><th>Data/Ora</th><th>Incontro</th><th>Campionato</th><th>Studio Statistico Prematch</th></tr></thead><tbody>"
                 for mf in DASHBOARD_DATA["match_futuri"]:
-                    res += f"<li>[{mf['data_ora']}] <b>{mf['partita']}</b> - <i>{mf['campionato']}</i><br>{mf['analisi']}</li>"
-                    
-            res += "</ul><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
+                    res += f"<tr><td><span class='badge'>{mf['data_ora']}</span></td><td><b>{mf['partita']}</b></td><td><span style='color:#94a3b8;'>{mf['campionato']}</span></td><td>{mf['analisi']}</td></tr>"
+                res += "</tbody></table>"
+                
+            res += "</div><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
             self.wfile.write(res.encode("utf-8"))
         else:
             self.send_error(404, "Not Found")
 
 def avvia_server():
     porta = int(os.environ.get("PORT", 10000))
-    print(f"Avvio server HTTP sulla porta {porta}...", flush=True)
     try:
         with TCPServer(("0.0.0.0", porta), DashboardHandler) as server:
             server.serve_forever()
-    except Exception as e:
-        print(f"Errore Server: {e}", flush=True)
+    except Exception: pass
 
 # =======================================================
-# LOGICHE DI ANALISI STATISTICA STORICA
+# LOGICHE DI ANALISI STATISTICA
 # =======================================================
 def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
     file_standard = f"{nome_file_csv}.csv"
     file_maiuscolo = f"{nome_file_csv}.CSV"
     nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
-    
     if not os.path.exists(nome_file):
-        return "Nessun dato d'archivio CSV disponibile per questa lega."
-        
+        return "Nessun dato CSV disponibile per questa lega."
     try:
         df = pd.read_csv(nome_file)
         partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
         partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
-        
         media_casa = float(partite_casa['FTHG'].mean()) if not partite_casa.empty and 'FTHG' in df.columns else 0.0
         media_fuori = float(partite_ospite['FTAG'].mean()) if not partite_ospite.empty and 'FTAG' in df.columns else 0.0
         somma_medie = media_casa + media_fuori
-        
-        output = f"Media Storica Casa: {media_casa:.2f} | Fuori: {media_fuori:.2f} | "
-        
+        output = f"Media Storica: {somma_medie:.2f} (C: {media_casa:.1f} | F: {media_fuori:.1f}) | "
         if is_live and minuto is not None:
             if somma_medie >= 2.40:
-                if minuto <= 35: output += "CONSIGLIO: OVER 0.5 HT"
-                elif minuto <= 65: output += f"CONSIGLIO: OVER {gol_totali + 1.5} LIVE"
-                elif minuto <= 82: output += f"CONSIGLIO: OVER {gol_totali + 0.5} FINALE"
+                if minuto <= 35: output += "<span style='color:#10b981;font-weight:bold;'>CONSIGLIO: OVER 0.5 HT</span>"
+                elif minuto <= 65: output += f"<span style='color:#10b981;font-weight:bold;'>CONSIGLIO: OVER {gol_totali + 1.5} LIVE</span>"
+                elif minuto <= 82: output += f"<span style='color:#10b981;font-weight:bold;'>CONSIGLIO: OVER {gol_totali + 0.5} FINALE</span>"
                 else: output += "No Bet"
-            else:
-                output += "No Bet (Media bassa)"
+            else: output += "No Bet (Media bassa)"
         else:
-            if somma_medie >= 3.20: output += "STUDIO: Segno OVER 2.5"
-            elif somma_medie >= 2.40: output += "STUDIO: Segno OVER 1.5"
-            else: output += "STUDIO: Segno UNDER"
+            if somma_medie >= 3.20: output += "STUDIO: Prematch OVER 2.5"
+            elif somma_medie >= 2.40: output += "STUDIO: Prematch OVER 1.5"
+            else: output += "STUDIO: Match da UNDER"
         return output
-    except Exception:
-        return "Errore durante l'elaborazione del file CSV."
+    except Exception: return "Errore elaborazione CSV."
 
 # =======================================================
-# ENGINE DI SCANSIONE DATI API
+# MOTORE DI SCANSIONE
 # =======================================================
 def scansione_partite_live():
     try:
@@ -168,67 +185,44 @@ def scansione_partite_live():
             DASHBOARD_DATA["partite_scansionate"] = len(partite)
             DASHBOARD_DATA["ultimo_aggiornamento"] = time.strftime("%H:%M:%S")
             nuovi_match_rilevanti = []
-            
             for partita in partite:
                 campionato_live = partita.get("L", "")
                 squadra_casa = partita.get("O1", "")
                 squadra_ospite = partita.get("O2", "")
-                
-                if campionato_live in DIZIONARIO_CAMPIONATI:
+                if campeonato_live in DIZIONARIO_CAMPIONATI:
                     nome_file_csv = DIZIONARIO_CAMPIONATI[campionato_live]
                     sc_data = partita.get("SC", {})
                     tempo_secondi = sc_data.get("TS", 0)
                     minuto_corrente = int(tempo_secondi // 60) if tempo_secondi > 0 else 1
-                    
                     fs_data = sc_data.get("FS", {})
-                    gol_casa = int(fs_data.get("G1", 0))
-                    gol_ospite = int(fs_data.get("G2", 0))
+                    gol_casa, gol_ospite = int(fs_data.get("G1", 0)), int(fs_data.get("G2", 0))
                     totale_gol_attuali = gol_casa + gol_ospite
-                    
                     tiri_porta_casa, tiri_porta_ospite = 0, 0
-                    tiri_fuori_casa, tiri_fuori_ospite = 0, 0
-                    ap_casa, ap_ospite = 0, 0
-                    
+                    tiri_totali, ap_totali = 0, 0
                     for stat in sc_data.get("S", []):
-                        tipo_stat = stat.get("T")
-                        if tipo_stat == 2:
-                            tiri_porta_casa, tiri_porta_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                        elif tipo_stat == 1:
-                            tiri_fuori_casa, tiri_fuori_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                        elif tipo_stat == 3:
-                            ap_casa, ap_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                    
+                        t = stat.get("T")
+                        if t == 2: tiri_porta_casa, tiri_porta_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
+                        elif t == 1: tiri_totali += int(stat.get("G1", 0)) + int(stat.get("G2", 0))
+                        elif t == 3: ap_totali = int(stat.get("G1", 0)) + int(stat.get("G2", 0))
                     tiri_porta_totali = tiri_porta_casa + tiri_porta_ospite
-                    tiri_totali = tiri_porta_totali + tiri_fuori_casa + tiri_fuori_ospite
-                    ap_totali = ap_casa + ap_ospite
+                    tiri_totali += tiri_porta_totali
                     ap_al_minuto = round(ap_totali / minuto_corrente, 2) if minuto_corrente > 0 else 0.0
                     
                     if tiri_totali > 0 or ap_totali > 0:
                         analisi_output = analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True)
                         nuovi_match_rilevanti.append({
                             "orario": f"{minuto_corrente}'", "partita": f"{squadra_casa} - {squadra_ospite}",
-                            "punteggio": f"{gol_casa} - {gol_ospite}", "campionato": campionato_live,
-                            "analisi": analisi_output
+                            "punteggio": f"{gol_casa} - {gol_ospite}", "campionato": campeonato_live, "analisi": analisi_output
                         })
-                        
-                        # Parametri di attacco pericoloso attivi per invio Telegram
                         if (ap_al_minuto >= 1.15 and minuto_corrente >= 15 and tiri_totali >= 4) or (tiri_porta_totali >= 5):
-                            messaggio = (
-                                f"🔥 MILLENIUM ATTACCO IN CORSO 🔥\n\n"
-                                f"Match: {squadra_casa} - {squadra_ospite}\n"
-                                f"Minuto: {minuto_corrente}' | Score: {gol_casa}-{gol_ospite}\n\n"
-                                f"Tiri in Porta: {tiri_porta_totali} (Totali: {tiri_totali})\n"
-                                f"Pressione AP/Min: {ap_al_minuto}\n\n"
-                                f"Analisi Storica:\n{analisi_output}"
-                            )
+                            testo_pulito = analisi_output.replace("<span style='color:#10b981;font-weight:bold;'>", "").replace("</span>", "")
+                            messaggio = f"🔥 MILLENIUM ATTACCO IN CORSO 🔥\n\nMatch: {squadra_casa} - {squadra_ospite}\nMinuto: {minuto_corrente}' | Score: {gol_casa}-{gol_ospite}\n\nTiri in Porta: {tiri_porta_totali}\nPressione AP/Min: {ap_al_minuto}\n\nAnalisi Storica:\n{testo_pulito}"
                             invia_telegram(messaggio)
                             DASHBOARD_DATA["alert_inviati_totale"] += 1
                             time.sleep(2)
-                            
             DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
             salva_dati_su_file()
-    except Exception as e:
-        print(f"Errore ciclo live: {e}", flush=True)
+    except Exception: pass
 
 def scansione_prematch():
     try:
@@ -246,26 +240,20 @@ def scansione_prematch():
                     ora_inizio = time.strftime('%d/%m %H:%M', time.localtime(timestamp_inizio))
                     prossimi_match.append({
                         "data_ora": ora_inizio, "partita": f"{squadra_casa} - {squadra_ospite}",
-                        "campionato": campionato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
+                        "campionato": campeonato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
                     })
             DASHBOARD_DATA["match_futuri"] = prossimi_match
             salva_dati_su_file()
-    except Exception as e:
-        print(f"Errore ciclo prematch: {e}", flush=True)
+    except Exception: pass
 
 def invia_telegram(messaggio):
-    if not TOKEN or not CHAT_ID:
-        return
-    try:
-        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": messaggio}, timeout=5)
-    except Exception:
-        pass
+    if not TOKEN or not CHAT_ID: return
+    try: requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": messaggio}, timeout=5)
+    except Exception: pass
 
 if __name__ == "__main__":
-    # Avviamo il server Web in background per consentire l'ascolto della porta
     Thread(target=avvia_server, daemon=True).start()
     print("Millenium Bot Pronto e Attivo!", flush=True)
-    
     while True:
         scansione_partite_live()
         scansione_prematch()
