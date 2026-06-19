@@ -100,19 +100,19 @@ def genera_html_calendario():
 def genera_html_archivio():
     campionati_attivi = [m.get("campionato", "") for m in DASHBOARD_DATA.get("match_rilevanti", [])]
     
-    html = "<div style='max-height: 400px; overflow-y: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);'>"
-    html += "<table style='margin-bottom:0;'><thead><tr><th>Stato</th><th>Lega</th><th>File</th></tr></thead><tbody id='archiveTable'>"
+    html = "<div style='max-height: 380px; overflow-y: auto; border-radius: 8px; border: 1px solid #e2e8f0; background: #ffffff;'>"
+    html += "<table style='margin-bottom:0; box-shadow: none; border-radius: 0;'><thead><tr><th>Stato</th><th>Competizione</th><th>File</th></tr></thead><tbody>"
     for nome, codice in DIZIONARIO_CAMPIONATI.items():
         pulito = nome.replace("Calcio. ", "")
         
         if nome in campionati_attivi:
-            stato = "<span class='badge-live-dot'></span><span style='color: #ef4444; font-weight:bold; font-size:11px;'>LIVE</span>"
-            stile_testo = "color: #ff4d4d; font-weight: bold;"
+            stato = "<span class='sof-live-badge'>LIVE</span>"
+            stile_testo = "color: #3b82f6; font-weight: 600;"
         else:
-            stato = "<span style='color:#10b981;'>🟢 Ready</span>"
-            stile_testo = "color: #cbd5e1;"
+            stato = "<span style='color:#64748b; font-size:12px;'>Disponibile</span>"
+            stile_testo = "color: #1e293b;"
             
-        html += f"<tr><td>{stato}</td><td style='font-size:12px; {stile_testo}'><b>{pulito}</b></td><td><span class='badge' style='background:rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);'>{codice}.csv</span></td></tr>"
+        html += f"<tr><td>{stato}</td><td style='font-size:12px; {stile_testo}'>{pulito}</td><td><span class='sof-odds-box'>{codice}.csv</span></td></tr>"
     html += "</tbody></table></div>"
     return html
 
@@ -130,110 +130,168 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            res = "<html><head><meta charset='utf-8'><title>Millenium Premium Terminal</title>"
+            res = "<html><head><meta charset='utf-8'><title>Sofascore Style - Millenium</title>"
             res += "<style>"
-            # NUOVO SFONDO COLORATO SFUMATO DI LIVELLO PROFESSIONAL
-            res += "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #070a13 0%, #0f172a 40%, #05070c 100%); color: #e2e8f0; margin: 0; padding: 20px; min-height: 100vh; }"
-            res += ".container { max-width: 1300px; margin: 0 auto; }"
-            res += "h1 { color: #38bdf8; border-bottom: 2px solid rgba(56, 189, 248, 0.2); padding-bottom: 12px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; text-shadow: 0 0 15px rgba(56,189,248,0.2); }"
-            res += ".layout-main { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }"
-            res += "@media (max-width: 1000px) { .layout-main { grid-template-columns: 1fr; } }"
-            res += ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }"
+            # PALETTE SOFASCORE: Sfondo chiaro, testo scuro ed elegante, tocchi blu e verdi
+            res += "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; }"
             
-            # EFFETTO VETRO (GLASSMORPHISM) SULLE CARD
-            res += ".card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }"
-            res += ".card h3 { margin: 0 0 6px 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }"
-            res += ".card .value { font-size: 22px; font-weight: bold; color: #f8fafc; }"
-            res += ".card .highlight { color: #10b981; text-shadow: 0 0 10px rgba(16,185,129,0.3); }"
+            # NAVBAR SUPERIORE TIPICA DI SOFASCORE
+            res += ".sof-header { background-color: #1b2c4a; color: #ffffff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }"
+            res += ".sof-header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; }"
+            res += ".sof-header h1 span { color: #3b82f6; margin-right: 5px; }"
+            res += ".sof-header .status-indicator { background: #10b981; color: white; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 600; }"
             
-            res += "h2 { color: #f1f5f9; font-size: 16px; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #38bdf8; padding-left: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }"
+            res += ".container { max-width: 1250px; margin: 20px auto; padding: 0 15px; }"
+            res += ".layout-main { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }"
+            res += "@media (max-width: 950px) { .layout-main { grid-template-columns: 1fr; } }"
             
-            # TAVOLI CON LUNETTE E SFUMATURE
-            res += "table { width: 100%; border-collapse: collapse; background: rgba(15, 23, 42, 0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 30px; }"
-            res += "th { background: rgba(30, 41, 59, 0.85); color: #38bdf8; text-align: left; padding: 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }"
-            res += "td { padding: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); font-size: 13px; color: #cbd5e1; }"
-            res += "tr:hover { background: rgba(56, 189, 248, 0.05); }"
+            # MINI STRISCIA STATISTICHE
+            res += ".stats-row { display: flex; gap: 15px; margin-bottom: 20px; overflow-x: auto; }"
+            res += ".sof-stat-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; min-width: 180px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }"
+            res += ".sof-stat-card h3 { margin: 0 0 4px 0; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }"
+            res += ".sof-stat-card .value { font-size: 18px; font-weight: 700; color: #0f172a; }"
             
-            # FILTRO SEARCH BAR PROFESSONALE
-            res += ".search-bar { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 6px; padding: 6px 12px; font-size: 12px; outline: none; width: 180px; transition: all 0.3s; }"
-            res += ".search-bar:focus { border-color: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.3); width: 220px; }"
+            # CONTENITORI PRINCIPALI SEZIONI
+            res += ".section-header { background: #ffffff; border: 1px solid #e2e8f0; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }"
+            res += ".section-title { font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }"
             
-            # BADGES
-            res += ".badge { background: #0284c7; color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }"
-            res += ".badge-live { background: #dc2626; box-shadow: 0 0 10px rgba(220,38,38,0.4); animation: pulse 2s infinite; }"
-            res += ".badge-live-dot { height: 8px; width: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 1.2s infinite; }"
+            # BARRA DI RICERCA SOFASCORE STYLE
+            res += ".sof-search { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; border-radius: 6px; padding: 6px 12px; font-size: 13px; outline: none; width: 200px; transition: all 0.2s; }"
+            res += ".sof-search:focus { background: #ffffff; border-color: #3b82f6; width: 240px; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }"
             
-            # CALENDARIO PERSONALIZZATO
-            res += ".cal-box { background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 25px; }"
-            res += ".cal-title { font-weight: bold; color: #38bdf8; margin-bottom: 15px; font-size: 14px; letter-spacing: 0.07em; text-shadow: 0 0 10px rgba(56,189,248,0.1); }"
-            res += ".cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }"
-            res += ".cal-header-days { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; }"
-            res += ".cal-day { padding: 9px 0; border-radius: 6px; font-size: 12px; font-family: monospace; font-weight: bold; transition: all 0.2s; }"
-            res += ".cal-day.empty { background: transparent; }"
-            res += ".cal-day.regular-day { background: #1e3a8a; color: #f59e0b; border: 1px solid rgba(245,158,11,0.1); }"
-            res += ".cal-day.today { background: #ffffff; color: #10b981; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); border: 1px solid #10b981; }"
+            # CONTENITORE RIGHE PARTITE (MATCH ROW)
+            res += ".match-list { background: #ffffff; border: 1px solid #e2e8f0; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }"
+            res += ".match-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }"
+            res += ".match-row:last-child { border-bottom: none; }"
+            res += ".match-row:hover { background-color: #f8fafc; }"
             
-            res += "@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.96); } 100% { opacity: 1; transform: scale(1); } }"
-            res += "</style></head><body><div class='container'>"
+            # ELEMENTI DEL MATCH ROW
+            res += ".match-time { width: 55px; font-size: 12px; font-weight: 600; color: #64748b; text-align: left; }"
+            res += ".match-time.live { color: #ef4444; animation: flash 1.5s infinite; }"
+            res += ".match-teams { flex: 1; display: flex; flex-direction: column; gap: 2px; padding-right: 10px; }"
+            res += ".team-name { font-size: 14px; color: #1e293b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
+            res += ".match-score { display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 14px; font-weight: 700; color: #0f172a; text-align: right; padding-right: 25px; min-width: 25px; }"
             
-            # HEADER TERMINALE
-            res += "<h1><span>⚡ MILLENIUM TERMINAL <span style='font-size:11px; background:rgba(16,185,129,0.1); color:#10b981; padding:3px 8px; border-radius:4px; margin-left:10px; border:1px solid rgba(16,185,129,0.2); vertical-align:middle;'>PREMIUM PRO</span></span> <span style='font-size:14px;color:#64748b;'>Engine: Online v2.4</span></h1>"
+            # BOX QUOTE / ANALISI ESTERNA
+            res += ".sof-odds-container { display: flex; gap: 8px; align-items: center; justify-content: flex-end; min-width: 280px; }"
+            res += ".sof-odds-box { background: #f1f5f9; border: 1px solid #e2e8f0; color: #334155; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; min-width: 70px; }"
+            res += ".sof-odds-box.tip { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; min-width: 140px; text-align: left; }"
             
-            # STATISTICHE CORRENTI
-            res += "<div class='stats-grid'>"
-            res += f"<div class='card'><h3>System Clock / Update</h3><div class='value' style='color:#38bdf8;'>⏱️ {DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
-            res += f"<div class='card'><h3>Scansione Flusso Core</h3><div class='value highlight'>{DASHBOARD_DATA['partite_scansionate']} <span style='font-size:12px;color:#64748b;font-weight:normal;'>match rilevati</span></div></div>"
-            res += f"<div class='card'><h3>Notifiche Push Telegram</h3><div class='value' style='color:#f59e0b;'>🚀 {DASHBOARD_DATA['alert_inviati_totale']} <span style='font-size:12px;color:#64748b;font-weight:normal;'>inviati</span></div></div>"
+            # BADGES E ALTRI UTILI
+            res += ".sof-live-badge { background: #ef4444; color: white; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; letter-spacing: 0.3px; }"
+            res += "table { width: 100%; border-collapse: collapse; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }"
+            res += "th { background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 10px 14px; border-bottom: 1px solid #e2e8f0; text-align: left; }"
+            res += "td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }"
+            
+            # CALENDARIO COMPATTO
+            res += ".cal-box { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }"
+            res += ".cal-title { font-weight: 700; color: #1e293b; margin-bottom: 10px; font-size: 13px; text-transform: uppercase; }"
+            res += ".cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }"
+            res += ".cal-header-days { font-size: 11px; color: #94a3b8; font-weight: 600; margin-bottom: 6px; }"
+            res += ".cal-day { padding: 6px 0; border-radius: 4px; font-size: 12px; font-weight: 600; }"
+            res += ".cal-day.regular-day { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }"
+            res += ".cal-day.today { background: #3b82f6; color: #ffffff; box-shadow: 0 2px 4px rgba(59,130,246,0.3); }"
+            
+            res += "@keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }"
+            res += "</style></head><body>"
+            
+            # NAVBAR HEADER
+            res += "<div class='sof-header'><h1><span>Sofa</span>score Premium</h1><div class='status-indicator'>LIVE ENGINE ACTIVE</div></div>"
+            
+            res += "<div class='container'>"
+            
+            # BANNER STATISTICHE CORRENTI
+            res += "<div class='stats-row'>"
+            res += f"<div class='sof-stat-card'><h3>Ultimo Update</h3><div class='value' style='color:#3b82f6;'>⏱️ {DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
+            res += f"<div class='sof-stat-card'><h3>In Scansione</h3><div class='value'>{DASHBOARD_DATA['partite_scansionate']} <span style='font-size:12px;font-weight:normal;color:#64748b;'>match</span></div></div>"
+            res += f"<div class='sof-stat-card'><h3>Notifiche Push</h3><div class='value' style='color:#10b981;'>🚀 {DASHBOARD_DATA['alert_inviati_totale']}</div></div>"
             res += "</div>"
             
-            # CORPO LAYOUT
+            # TIMELINE PRINCIPALE
             res += "<div class='layout-main'>"
             res += "<div class='col-left'>"
             
-            # TABELLA MONITORAGGIO LIVE + FUNZIONE DI RICERCA
-            res += "<h2><span>🔥 Monitoraggio Live</span> <input type='text' class='search-bar' id='searchLive' placeholder='Cerca match live...' onkeyup='filterTable(\"searchLive\", \"liveTable\")'></h2>"
+            # BLOCCO DELLE PARTITE IN DIRETTA (LIVE)
+            res += "<div class='section-header'><div class='section-title'>⚽ Risultati in Diretta (Live)</div><input type='text' class='sof-search' id='searchLive' placeholder='Cerca partita live...' onkeyup='filterSofList(\"searchLive\", \"liveList\")'></div>"
+            res += "<div class='match-list' id='liveList'>"
             if not DASHBOARD_DATA["match_rilevanti"]:
-                res += "<div style='background:rgba(17,24,39,0.5);padding:30px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);color:#64748b;margin-bottom:30px;text-align:center;font-style:italic;'>Nessun match attivo soddisfa i filtri AP/Tiri impostati. In attesa di dati...</div>"
+                res += "<div style='padding:30px; color:#64748b; text-align:center; font-size:13px; font-style:italic; background:#ffffff;'>Nessun match live soddisfa i parametri AP/Tiri impostati.</div>"
             else:
-                res += "<table><thead><tr><th>Tempo</th><th>Incontro</th><th>Score</th><th>Consiglio / Archivio CSV</th></tr></thead><tbody id='liveTable'>"
                 for m in DASHBOARD_DATA["match_rilevanti"]:
-                    res += f"<tr><td><span class='badge badge-live'>{m['orario']}</span></td><td><b>{m['partita']}</b><br><span style='font-size:11px;color:#64748b;'>{m.get('campionato','-')}</span></td><td><span style='font-family:monospace;font-weight:bold;color:#f59e0b;font-size:14px;'>{m['punteggio']}</span></td><td>{m['analisi']}</td></tr>"
-                res += "</tbody></table>"
-            
-            # TABELLA PALINSESTO + FUNZIONE DI RICERCA
-            res += "<h2><span>📅 Palinsesto Prossimi Match</span> <input type='text' class='search-bar' id='searchPrematch' placeholder='Cerca prematch...' onkeyup='filterTable(\"searchPrematch\", \"prematchTable\")'></h2>"
-            if not DASHBOARD_DATA.get("match_futuri"):
-                res += "<div style='background:rgba(17,24,39,0.5);padding:30px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);color:#64748b;text-align:center;font-style:italic;'>Palinsesto prematch momentaneamente vuoto o mercati chiusi.</div>"
-            else:
-                res += "<table><thead><tr><th>Ora Inizio</th><th>Incontro</th><th>Campionato</th><th>Analisi Prematch</th></tr></thead><tbody id='prematchTable'>"
-                for mf in DASHBOARD_DATA["match_futuri"]:
-                    res += f"<tr><td><span class='badge'>{mf['data_ora']}</span></td><td><b>{mf['partita']}</b></td><td><span style='color:#94a3b8;font-size:11px;'>{mf['campionato']}</span></td><td>{mf['analisi']}</td></tr>"
-                res += "</tbody></table>"
-                
+                    squadre = m['partita'].split(" - ")
+                    casa = squadre[0] if len(squadre) > 0 else "Casa"
+                    ospite = squadre[1] if len(squadre) > 1 else "Ospite"
+                    
+                    punti = m['punteggio'].split(" - ")
+                    punti_casa = punti[0] if len(punti) > 0 else "0"
+                    punti_ospite = punti[1] if len(punti) > 1 else "0"
+                    
+                    res += f"<div class='match-row'>"
+                    res += f"  <div class='match-time live'>{m['orario']}</div>"
+                    res += f"  <div class='match-teams'>"
+                    res += f"    <div class='team-name'><b>{casa}</b></div>"
+                    res += f"    <div class='team-name'><b>{ospite}</b></div>"
+                    res += f"    <div style='font-size:11px; color:#94a3b8; margin-top:2px;'>{m.get('campionato','-')}</div>"
+                    res += f"  </div>"
+                    res += f"  <div class='match-score'>"
+                    res += f"    <div style='color:#ef4444;'>{punti_casa}</div>"
+                    res += f"    <div style='color:#ef4444;'>{punti_ospite}</div>"
+                    res += f"  </div>"
+                    res += f"  <div class='sof-odds-container'>"
+                    res += f"    <div class='sof-odds-box tip'>{m['analisi']}</div>"
+                    res += f"  </div>"
+                    res += f"</div>"
             res += "</div>"
             
-            # COLONNA DESTRA (CALENDARIO + ARCHIVIO)
+            # BLOCCO DEL PALINSESTO FUTURO (PREMATCH)
+            res += "<div class='section-header'><div class='section-title'>📅 Programma dei Prossimi Match</div><input type='text' class='sof-search' id='searchPrematch' placeholder='Cerca palinsesto...' onkeyup='filterSofList(\"searchPrematch\", \"prematchList\")'></div>"
+            res += "<div class='match-list' id='prematchList'>"
+            if not DASHBOARD_DATA.get("match_futuri"):
+                res += "<div style='padding:30px; color:#64748b; text-align:center; font-size:13px; font-style:italic; background:#ffffff;'>Nessun match futuro in palinsesto nelle prossime ore.</div>"
+            else:
+                for mf in DASHBOARD_DATA["match_futuri"]:
+                    squadre_f = mf['partita'].split(" - ")
+                    casa_f = squadre_f[0] if len(squadre_f) > 0 else "Casa"
+                    ospite_f = squadre_f[1] if len(squadre_f) > 1 else "Ospite"
+                    
+                    res += f"<div class='match-row'>"
+                    res += f"  <div class='match-time' style='font-size:11px; line-height:1.2; color:#3b82f6;'>{mf['data_ora']}</div>"
+                    res += f"  <div class='match-teams'>"
+                    res += f"    <div class='team-name'>{casa_f}</div>"
+                    res += f"    <div class='team-name'>{ospite_f}</div>"
+                    res += f"    <div style='font-size:11px; color:#94a3b8; margin-top:2px;'>{mf['campionato']}</div>"
+                    res += f"  </div>"
+                    res += f"  <div class='sof-odds-container'>"
+                    res += f"    <div class='sof-odds-box tip' style='background:#f8fafc; color:#475569; border-color:#e2e8f0;'>{mf['analisi']}</div>"
+                    res += f"  </div>"
+                    res += f"</div>"
+            res += "</div>"
+            
+            res += "</div>"
+            
+            # COLONNA LATERALE DESTRA (CALENDARIO + LEGA ARCHIVIO)
             res += "<div class='col-right'>"
-            res += "<h2>📆 Calendario Operativo</h2>"
+            res += "<div class='section-header' style='margin-top:0; border-radius:8px 8px 0 0;'><div class='section-title'>🗓️ Calendario Operativo</div></div>"
             res += genera_html_calendario()
             
-            res += "<h2 style='margin-top:20px;'>🗄️ Database Database (.CSV)</h2>"
+            res += "<div class='section-header' style='border-radius:8px 8px 0 0; margin-top:20px;'><div class='section-title'>🗄️ Database Storici (.CSV)</div></div>"
             res += genera_html_archivio()
             res += "</div>"
             
-            # FUNZIONI JAVASCRIPT AVANZATE DI RICERCA REAL-TIME
             res += "</div></div>"
+            
+            # FILTRO DINAMICO FLUIDO ADATTO AL NUOVO LAYOUT A LISTA (SOFASCORE STYLE)
             res += "<script>"
-            res += "function filterTable(inputId, tableId) {"
+            res += "function filterSofList(inputId, listId) {"
             res += "  var input = document.getElementById(inputId);"
             res += "  var filter = input.value.toUpperCase();"
-            res += "  var tbody = document.getElementById(tableId);"
-            res += "  if(!tbody) return;"
-            res += "  var rows = tbody.getElementsByTagName('tr');"
+            res += "  var container = document.getElementById(listId);"
+            res += "  if(!container) return;"
+            res += "  var rows = container.getElementsByClassName('match-row');"
             res += "  for (var i = 0; i < rows.length; i++) {"
             res += "    var text = rows[i].textContent || rows[i].innerText;"
             res += "    if (text.toUpperCase().indexOf(filter) > -1) {"
-            res += "      rows[i].style.display = '';"
+            res += "      rows[i].style.display = 'flex';"
             res += "    } else {"
             res += "      rows[i].style.display = 'none';"
             res += "    }"
@@ -266,18 +324,18 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
         media_casa = float(partite_casa['FTHG'].mean()) if not partite_casa.empty and 'FTHG' in df.columns else 0.0
         media_fuori = float(partite_ospite['FTAG'].mean()) if not partite_ospite.empty and 'FTAG' in df.columns else 0.0
         somma_medie = media_casa + media_fuori
-        output = f"Media: {somma_medie:.2f} (C:{media_casa:.1f} F:{media_fuori:.1f}) | "
+        output = f"📊 {somma_medie:.2f} (C:{media_casa:.1f} F:{media_fuori:.1f}) | "
         if is_live and minuto is not None:
             if somma_medie >= 2.40:
-                if minuto <= 35: output += "<span style='color:#10b981;font-weight:bold;'>OVER 0.5 HT</span>"
-                elif minuto <= 65: output += f"<span style='color:#10b981;font-weight:bold;'>OVER {gol_totali + 1.5} LIVE</span>"
-                elif minuto <= 82: output += f"<span style='color:#10b981;font-weight:bold;'>OVER {gol_totali + 0.5} FINALE</span>"
+                if minuto <= 35: output += "<b style='color:#10b981;'>💥 OVER 0.5 HT</b>"
+                elif minuto <= 65: output += f"<b style='color:#10b981;'>💥 OVER {gol_totali + 1.5}</b>"
+                elif minuto <= 82: output += f"<b style='color:#10b981;'>💥 OVER {gol_totali + 0.5}</b>"
                 else: output += "No Bet"
             else: output += "No Bet (Storico basso)"
         else:
-            if somma_medie >= 3.20: output += "STUDIO: OVER 2.5"
-            elif somma_medie >= 2.40: output += "STUDIO: OVER 1.5"
-            else: output += "STUDIO: UNDER"
+            if somma_medie >= 3.20: output += "<b>🔍 OVER 2.5</b>"
+            elif somma_medie >= 2.40: output += "<b>🔍 OVER 1.5</b>"
+            else: output += "<b>🔍 UNDER</b>"
         return output
     except Exception: return "Errore calcolo."
 
@@ -319,7 +377,7 @@ def scansione_partite_live():
                             "punteggio": f"{gol_casa} - {gol_ospite}", "campionato": campeonato_live, "analisi": analisi_output
                         })
                         if (ap_al_minuto >= 1.15 and minuto_corrente >= 15 and tiri_totali >= 4) or (tiri_porta_totali >= 5):
-                            testo_pulito = analisi_output.replace("<span style='color:#10b981;font-weight:bold;'>", "").replace("</span>", "")
+                            testo_pulito = analisi_output.replace("<b style='color:#10b981;'>", "").replace("</b>", "").replace("<b>", "").replace("</b>", "")
                             messaggio = f"🔥 MILLENIUM ATTACCO IN CORSO 🔥\n\nMatch: {squadra_casa} - {squadra_ospite}\nMinuto: {minuto_corrente}' | Score: {gol_casa}-{gol_ospite}\n\nTiri in Porta: {tiri_porta_totali}\nPressione AP/Min: {ap_al_minuto}\n\nAnalisi Storica:\n{testo_pulito}"
                             invia_telegram(messaggio)
                             DASHBOARD_DATA["alert_inviati_totale"] += 1
@@ -344,7 +402,7 @@ def scansione_prematch():
                     ora_inizio = time.strftime('%d/%m %H:%M', time.localtime(timestamp_inizio))
                     prossimi_match.append({
                         "data_ora": ora_inizio, "partita": f"{squadra_casa} - {squadra_ospite}",
-                        "campionato": campionato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
+                        "campionato": campeonato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
                     })
             DASHBOARD_DATA["match_futuri"] = prossimi_match
             salva_dati_su_file()
