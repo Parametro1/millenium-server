@@ -78,8 +78,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            badge_campionati = "".join([f"<span class=\"db-league-badge\">{sigla}</span>" for sigla in CAMPIONATI_ALL])
-            righe_campionati_html = "".join([f"<tr><td style=\"color:#58a6ff; font-weight:700; border-bottom: 1px solid #161b22;\">{sigla}</td><td style=\"color:#8b949e; border-bottom: 1px solid #161b22;\">{nome}</td></tr>" for nome, sigla in DIZIONARIO_CAMPIONATI.items()])
+            badge_campionati = "".join([f'<span class="db-league-badge">{sigla}</span>' for sigla in CAMPIONATI_ALL])
+            righe_campionati_html = "".join([f'<tr><td style="color:#58a6ff; font-weight:700; border-bottom: 1px solid #161b22;">{sigla}</td><td style="color:#8b949e; border-bottom: 1px solid #161b22;">{nome}</td></tr>' for nome, sigla in DIZIONARIO_CAMPIONATI.items()])
 
             giorni_list = []
             nomi_giorni = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"]
@@ -90,15 +90,33 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 giorni_list.append({"id": d.strftime("%d/%m"), "label": tag, "is_oggi": i == 0})
             
             giorni_json = json.dumps(giorni_list)
-            len_campionati = len(CAMPIONATI_ALL)
+            len_campionati = str(len(CAMPIONATI_ALL))
 
-            html = f"""<!DOCTYPE html>
+            # HTML STRUTTURATO COME STRINGA STANDARD SENZA F-STRING PER EVITARE SYNTAX ERROR
+            html = """<!DOCTYPE html>
 <html>
 <head>
     <title>Millenium — Professional Trading Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #010409; color: #c9d1d9; margin:0; padding:25px; box-sizing: border-box; }}
-        .container {{ max-width: 1700px; margin: 0 auto; }}
-        .header {{ background: #0d1117; padding: 20px 30px; border-radius: 12px; border: 1px solid #21262d; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }}
-        h1 {{ color: #f0f6fc; margin: 0;
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #010409; color: #c9d1d9; margin:0; padding:25px; box-sizing: border-box; }
+        .container { max-width: 1700px; margin: 0 auto; }
+        .header { background: #0d1117; padding: 20px 30px; border-radius: 12px; border: 1px solid #21262d; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        h1 { color: #f0f6fc; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+        .status-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .badge { background: #161b22; color: #8b949e; padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; font-size: 13px; font-weight: 600; }
+        .badge span { color: #58a6ff; font-weight: 700; }
+        .badge-online { background: rgba(46, 160, 67, 0.15); color: #3fb950; border-color: rgba(56, 139, 253, 0.15); }
+        .badge-live-count { background: rgba(248, 81, 73, 0.1); color: #f85149; border-color: rgba(248, 81, 73, 0.2); }
+        .controls-panel { background: #0d1117; border: 1px solid #21262d; padding: 20px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .search-box { background: #010409; border: 1px solid #30363d; color: #f0f6fc; padding: 10px 16px; border-radius: 6px; font-size: 14px; width: 320px; transition: border-color 0.2s; }
+        .search-box:focus { outline: none; border-color: #58a6ff; }
+        .db-info { display: flex; flex-direction: column; gap: 8px; flex: 1; max-width: 70%; }
+        .db-title { font-size: 11px; color: #8b949e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-container { display: flex; gap: 6px; flex-wrap: wrap; }
+        .db-league-badge { background: #161b22; color: #c9d1d9; font-weight: 600; font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid #30363d; }
+        .calendar-section { background: #0d1117; border: 1px solid #21262d; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+        .calendar-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #d29922; margin-bottom: 15px; letter-spacing: 0.5px; }
+        .calendar-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+        .cal-btn { flex: 1; min-width: 125px; padding: 12px 8px; border-radius: 6px; border: 1px solid #21262d; background: #161b22; text-align: center; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s ease; }
+        .cal-btn .cal-sub { font-size: 11px; font-weight: 500; margin-top: 3px; display
