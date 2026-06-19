@@ -98,23 +98,22 @@ def genera_html_calendario():
     return html
 
 def genera_html_archivio():
-    # Estraiamo i campionati che sono attualmente live per cambiare colore
     campionati_attivi = [m.get("campionato", "") for m in DASHBOARD_DATA.get("match_rilevanti", [])]
     
-    html = "<table style='margin-top:10px;'><thead><tr><th>Stato</th><th>Lega</th><th>File</th></tr></thead><tbody>"
+    html = "<div style='max-height: 400px; overflow-y: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);'>"
+    html += "<table style='margin-bottom:0;'><thead><tr><th>Stato</th><th>Lega</th><th>File</th></tr></thead><tbody id='archiveTable'>"
     for nome, codice in DIZIONARIO_CAMPIONATI.items():
         pulito = nome.replace("Calcio. ", "")
         
-        # Se il campionato ha un match live, diventa rosso con pallino rosso
         if nome in campionati_attivi:
-            stato = "<span style='animation: pulse 1.5s infinite;'>🔴 LIVE</span>"
-            stile_testo = "color: #ef4444; font-weight: bold;" # Rosso acceso
+            stato = "<span class='badge-live-dot'></span><span style='color: #ef4444; font-weight:bold; font-size:11px;'>LIVE</span>"
+            stile_testo = "color: #ff4d4d; font-weight: bold;"
         else:
-            stato = "🟢"
-            stile_testo = "color: #cbd5e1;" # Grigio/Bianco standard
+            stato = "<span style='color:#10b981;'>🟢 Ready</span>"
+            stile_testo = "color: #cbd5e1;"
             
-        html += f"<tr><td>{stato}</td><td style='font-size:12px; {stile_testo}'><b>{pulito}</b></td><td><span class='badge' style='background:#475569;'>{codice}.csv</span></td></tr>"
-    html += "</tbody></table>"
+        html += f"<tr><td>{stato}</td><td style='font-size:12px; {stile_testo}'><b>{pulito}</b></td><td><span class='badge' style='background:rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);'>{codice}.csv</span></td></tr>"
+    html += "</tbody></table></div>"
     return html
 
 class DashboardHandler(SimpleHTTPRequestHandler):
@@ -131,79 +130,118 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            res = "<html><head><meta charset='utf-8'><title>Millenium Terminal</title>"
+            res = "<html><head><meta charset='utf-8'><title>Millenium Premium Terminal</title>"
             res += "<style>"
-            res += "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0f19; color: #e2e8f0; margin: 0; padding: 20px; }"
-            res += ".container { max-width: 1200px; margin: 0 auto; }"
-            res += "h1 { color: #38bdf8; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }"
-            res += ".layout-main { display: grid; grid-template-columns: 1fr 360px; gap: 30px; }"
-            res += "@media (max-width: 900px) { .layout-main { grid-template-columns: 1fr; } }"
+            # NUOVO SFONDO COLORATO SFUMATO DI LIVELLO PROFESSIONAL
+            res += "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #070a13 0%, #0f172a 40%, #05070c 100%); color: #e2e8f0; margin: 0; padding: 20px; min-height: 100vh; }"
+            res += ".container { max-width: 1300px; margin: 0 auto; }"
+            res += "h1 { color: #38bdf8; border-bottom: 2px solid rgba(56, 189, 248, 0.2); padding-bottom: 12px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; text-shadow: 0 0 15px rgba(56,189,248,0.2); }"
+            res += ".layout-main { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }"
+            res += "@media (max-width: 1000px) { .layout-main { grid-template-columns: 1fr; } }"
             res += ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }"
-            res += ".card { background: #111827; border: 1px solid #1e293b; padding: 15px; border-radius: 8px; }"
-            res += ".card h3 { margin: 0 0 5px 0; color: #94a3b8; font-size: 12px; text-transform: uppercase; }"
-            res += ".card .value { font-size: 20px; font-weight: bold; color: #f8fafc; }"
-            res += ".card .highlight { color: #10b981; }"
-            res += "h2 { color: #f1f5f9; font-size: 17px; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #38bdf8; padding-left: 10px; text-transform: uppercase; letter-spacing: 0.05em; }"
-            res += "table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; margin-bottom: 30px; }"
-            res += "th { background: #1e293b; color: #38bdf8; text-align: left; padding: 12px; font-size: 13px; }"
-            res += "td { padding: 12px; border-bottom: 1px solid #1e293b; font-size: 13px; color: #cbd5e1; }"
-            res += "tr:hover { background: #1f2937; }"
-            res += ".badge { background: #0284c7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }"
-            res += ".badge-live { background: #dc2626; animation: pulse 2s infinite; }"
             
-            # STILI CALENDARIO
-            res += ".cal-box { background: #111827; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 25px; }"
-            res += ".cal-title { font-weight: bold; color: #38bdf8; margin-bottom: 15px; font-size: 14px; letter-spacing: 0.05em; }"
-            res += ".cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }"
-            res += ".cal-header-days { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 10px; }"
-            res += ".cal-day { padding: 8px 0; border-radius: 4px; font-size: 12px; font-family: monospace; font-weight: bold; }"
+            # EFFETTO VETRO (GLASSMORPHISM) SULLE CARD
+            res += ".card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }"
+            res += ".card h3 { margin: 0 0 6px 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }"
+            res += ".card .value { font-size: 22px; font-weight: bold; color: #f8fafc; }"
+            res += ".card .highlight { color: #10b981; text-shadow: 0 0 10px rgba(16,185,129,0.3); }"
+            
+            res += "h2 { color: #f1f5f9; font-size: 16px; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #38bdf8; padding-left: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }"
+            
+            # TAVOLI CON LUNETTE E SFUMATURE
+            res += "table { width: 100%; border-collapse: collapse; background: rgba(15, 23, 42, 0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 30px; }"
+            res += "th { background: rgba(30, 41, 59, 0.85); color: #38bdf8; text-align: left; padding: 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }"
+            res += "td { padding: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); font-size: 13px; color: #cbd5e1; }"
+            res += "tr:hover { background: rgba(56, 189, 248, 0.05); }"
+            
+            # FILTRO SEARCH BAR PROFESSONALE
+            res += ".search-bar { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 6px; padding: 6px 12px; font-size: 12px; outline: none; width: 180px; transition: all 0.3s; }"
+            res += ".search-bar:focus { border-color: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.3); width: 220px; }"
+            
+            # BADGES
+            res += ".badge { background: #0284c7; color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }"
+            res += ".badge-live { background: #dc2626; box-shadow: 0 0 10px rgba(220,38,38,0.4); animation: pulse 2s infinite; }"
+            res += ".badge-live-dot { height: 8px; width: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 1.2s infinite; }"
+            
+            # CALENDARIO PERSONALIZZATO
+            res += ".cal-box { background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 25px; }"
+            res += ".cal-title { font-weight: bold; color: #38bdf8; margin-bottom: 15px; font-size: 14px; letter-spacing: 0.07em; text-shadow: 0 0 10px rgba(56,189,248,0.1); }"
+            res += ".cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }"
+            res += ".cal-header-days { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; }"
+            res += ".cal-day { padding: 9px 0; border-radius: 6px; font-size: 12px; font-family: monospace; font-weight: bold; transition: all 0.2s; }"
             res += ".cal-day.empty { background: transparent; }"
-            res += ".cal-day.regular-day { background: #1e3a8a; color: #f59e0b; }"
-            res += ".cal-day.today { background: #ffffff; color: #10b981; box-shadow: 0 0 10px rgba(255,255,255,0.3); }"
+            res += ".cal-day.regular-day { background: #1e3a8a; color: #f59e0b; border: 1px solid rgba(245,158,11,0.1); }"
+            res += ".cal-day.today { background: #ffffff; color: #10b981; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); border: 1px solid #10b981; }"
             
-            res += "@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }"
+            res += "@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.96); } 100% { opacity: 1; transform: scale(1); } }"
             res += "</style></head><body><div class='container'>"
             
-            res += "<h1><span>⚡ MILLENIUM TERMINAL</span> <span style='font-size:14px;color:#64748b;'>Sistema Online</span></h1>"
+            # HEADER TERMINALE
+            res += "<h1><span>⚡ MILLENIUM TERMINAL <span style='font-size:11px; background:rgba(16,185,129,0.1); color:#10b981; padding:3px 8px; border-radius:4px; margin-left:10px; border:1px solid rgba(16,185,129,0.2); vertical-align:middle;'>PREMIUM PRO</span></span> <span style='font-size:14px;color:#64748b;'>Engine: Online v2.4</span></h1>"
             
+            # STATISTICHE CORRENTI
             res += "<div class='stats-grid'>"
-            res += f"<div class='card'><h3>Ultimo Update</h3><div class='value'>{DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
-            res += f"<div class='card'><h3>Live Scansionati</h3><div class='value highlight'>{DASHBOARD_DATA['partite_scansionate']}</div></div>"
-            res += f"<div class='card'><h3>Alert Telegram</h3><div class='value' style='color:#38bdf8;'>{DASHBOARD_DATA['alert_inviati_totale']}</div></div>"
+            res += f"<div class='card'><h3>System Clock / Update</h3><div class='value' style='color:#38bdf8;'>⏱️ {DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
+            res += f"<div class='card'><h3>Scansione Flusso Core</h3><div class='value highlight'>{DASHBOARD_DATA['partite_scansionate']} <span style='font-size:12px;color:#64748b;font-weight:normal;'>match rilevati</span></div></div>"
+            res += f"<div class='card'><h3>Notifiche Push Telegram</h3><div class='value' style='color:#f59e0b;'>🚀 {DASHBOARD_DATA['alert_inviati_totale']} <span style='font-size:12px;color:#64748b;font-weight:normal;'>inviati</span></div></div>"
             res += "</div>"
             
+            # CORPO LAYOUT
             res += "<div class='layout-main'>"
             res += "<div class='col-left'>"
             
-            res += "<h2>🔥 Monitoraggio Live</h2>"
+            # TABELLA MONITORAGGIO LIVE + FUNZIONE DI RICERCA
+            res += "<h2><span>🔥 Monitoraggio Live</span> <input type='text' class='search-bar' id='searchLive' placeholder='Cerca match live...' onkeyup='filterTable(\"searchLive\", \"liveTable\")'></h2>"
             if not DASHBOARD_DATA["match_rilevanti"]:
-                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;margin-bottom:30px;'>Nessun match attivo con i parametri minimi richiesti.</div>"
+                res += "<div style='background:rgba(17,24,39,0.5);padding:30px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);color:#64748b;margin-bottom:30px;text-align:center;font-style:italic;'>Nessun match attivo soddisfa i filtri AP/Tiri impostati. In attesa di dati...</div>"
             else:
-                res += "<table><thead><tr><th>Tempo</th><th>Incontro</th><th>Score</th><th>Consiglio / Archivio CSV</th></tr></thead><tbody>"
+                res += "<table><thead><tr><th>Tempo</th><th>Incontro</th><th>Score</th><th>Consiglio / Archivio CSV</th></tr></thead><tbody id='liveTable'>"
                 for m in DASHBOARD_DATA["match_rilevanti"]:
-                    res += f"<tr><td><span class='badge badge-live'>{m['orario']}</span></td><td><b>{m['partita']}</b><br><span style='font-size:11px;color:#64748b;'>{m.get('campionato','-')}</span></td><td><span style='font-family:monospace;font-weight:bold;color:#f59e0b;'>{m['punteggio']}</span></td><td>{m['analisi']}</td></tr>"
+                    res += f"<tr><td><span class='badge badge-live'>{m['orario']}</span></td><td><b>{m['partita']}</b><br><span style='font-size:11px;color:#64748b;'>{m.get('campionato','-')}</span></td><td><span style='font-family:monospace;font-weight:bold;color:#f59e0b;font-size:14px;'>{m['punteggio']}</span></td><td>{m['analisi']}</td></tr>"
                 res += "</tbody></table>"
             
-            res += "<h2>📅 Palinsesto Prossimi Match</h2>"
+            # TABELLA PALINSESTO + FUNZIONE DI RICERCA
+            res += "<h2><span>📅 Palinsesto Prossimi Match</span> <input type='text' class='search-bar' id='searchPrematch' placeholder='Cerca prematch...' onkeyup='filterTable(\"searchPrematch\", \"prematchTable\")'></h2>"
             if not DASHBOARD_DATA.get("match_futuri"):
-                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;'>Palinsesto prematch momentaneamente vuoto.</div>"
+                res += "<div style='background:rgba(17,24,39,0.5);padding:30px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);color:#64748b;text-align:center;font-style:italic;'>Palinsesto prematch momentaneamente vuoto o mercati chiusi.</div>"
             else:
-                res += "<table><thead><tr><th>Ora</th><th>Incontro</th><th>Campionato</th><th>Analisi Prematch</th></tr></thead><tbody>"
+                res += "<table><thead><tr><th>Ora Inizio</th><th>Incontro</th><th>Campionato</th><th>Analisi Prematch</th></tr></thead><tbody id='prematchTable'>"
                 for mf in DASHBOARD_DATA["match_futuri"]:
                     res += f"<tr><td><span class='badge'>{mf['data_ora']}</span></td><td><b>{mf['partita']}</b></td><td><span style='color:#94a3b8;font-size:11px;'>{mf['campionato']}</span></td><td>{mf['analisi']}</td></tr>"
                 res += "</tbody></table>"
                 
             res += "</div>"
             
+            # COLONNA DESTRA (CALENDARIO + ARCHIVIO)
             res += "<div class='col-right'>"
-            res += "<h2>📆 Calendario</h2>"
+            res += "<h2>📆 Calendario Operativo</h2>"
             res += genera_html_calendario()
             
-            res += "<h2 style='margin-top:20px;'>🗄️ Campionati in Archivio</h2>"
+            res += "<h2 style='margin-top:20px;'>🗄️ Database Database (.CSV)</h2>"
             res += genera_html_archivio()
             res += "</div>"
             
-            res += "</div></div><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
+            # FUNZIONI JAVASCRIPT AVANZATE DI RICERCA REAL-TIME
+            res += "</div></div>"
+            res += "<script>"
+            res += "function filterTable(inputId, tableId) {"
+            res += "  var input = document.getElementById(inputId);"
+            res += "  var filter = input.value.toUpperCase();"
+            res += "  var tbody = document.getElementById(tableId);"
+            res += "  if(!tbody) return;"
+            res += "  var rows = tbody.getElementsByTagName('tr');"
+            res += "  for (var i = 0; i < rows.length; i++) {"
+            res += "    var text = rows[i].textContent || rows[i].innerText;"
+            res += "    if (text.toUpperCase().indexOf(filter) > -1) {"
+            res += "      rows[i].style.display = '';"
+            res += "    } else {"
+            res += "      rows[i].style.display = 'none';"
+            res += "    }"
+            res += "  }"
+            res += "}"
+            res += "setTimeout(function(){ location.reload(); }, 15000);"
+            res += "</script></body></html>"
+            
             self.wfile.write(res.encode("utf-8"))
         else:
             self.send_error(404, "Not Found")
