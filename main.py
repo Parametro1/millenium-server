@@ -1,15 +1,21 @@
-import os, time, json, calendar, requests, pandas as pd
+import os
+import time
+import requests
+from threading import Thread
 from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
-from threading import Thread
-from datetime import datetime
 
-# Versione semplificata per evitare errori di sintassi da copia-incolla
-def main():
-    print("Millenium Bot Booting...")
-    # Qui il resto del tuo codice originale...
-    # Se il problema persiste dopo questa pulizia, 
-    # verifica se nel file 'requirements.txt' hai tutti i moduli necessari.
+def avvia_server():
+    porta = int(os.environ.get("PORT", 10000))
+    print(f"Server avviato sulla porta {porta}")
+    with TCPServer(("0.0.0.0", porta), SimpleHTTPRequestHandler) as server:
+        server.serve_forever()
 
 if __name__ == "__main__":
-    print("Avvio...")
+    # Avvia il server web
+    Thread(target=avvia_server, daemon=True).start()
+    print("Millenium Bot Online. In attesa di segnali...")
+    
+    # Loop di mantenimento
+    while True:
+        time.sleep(60)
