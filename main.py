@@ -75,29 +75,30 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            # RICOSTRUZIONE DELLA GRAFICA PREMIUM (Divisa in stringhe singole per evitare errori di sintassi)
+            # COSTRUZIONE SICURA E PULITA DELL'INTERFACCIA
             html = "<!DOCTYPE html><html><head><title>Millenium Terminal</title>"
             html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
             html += "<style>"
             html += "body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0b0e14; color: #e2e8f0; margin: 0; padding: 20px; }"
             html += ".container { max-width: 1200px; margin: 0 auto; }"
-            html += "h1 { color: #f1f5f9; display: flex; align-items: center; gap: 10px; margin-bottom: 25px; font-size: 28px; }"
+            html += "h1 { color: #f1f5f9; margin-bottom: 25px; font-size: 28px; }"
             html += ".grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }"
-            html += ".card-stat { background: #151d2a; padding: 20px; border-radius: 12px; border: 1px solid #233247; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }"
-            html += ".card-stat label { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }"
+            html += ".card-stat { background: #151d2a; padding: 20px; border-radius: 12px; border: 1px solid #233247; }"
+            html += ".card-stat label { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }"
             html += ".card-stat div { font-size: 22px; font-weight: bold; color: #38bdf8; }"
+            html += h2 = " color: #38bdf8; font-size: 20px; margin-top: 40px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; " # Fallback line text variable clean up
             html += "h2 { color: #38bdf8; font-size: 20px; margin-top: 40px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; }"
             html += ".table-wrapper { background: #151d2a; border-radius: 12px; border: 1px solid #233247; overflow: hidden; margin-top: 15px; }"
             html += "table { width: 100%; border-collapse: collapse; text-align: left; }"
-            html += "th { background: #1e293b; padding: 14px 16px; font-size: 14px; color: #94a3b8; font-weight: 600; }"
-            html += "td { padding: 16px; border-bottom: 1px solid #233247; font-size: 14px; vertical-align: middle; }"
-            html += ".badge-time { background: #0c4a6e; color: #38bdf8; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-family: monospace; }"
+            html += "th { background: #1e293b; padding: 14px 16px; font-size: 14px; color: #94a3b8; }"
+            html += "td { padding: 16px; border-bottom: 1px solid #233247; font-size: 14px; }"
+            html += ".badge-time { background: #0c4a6e; color: #38bdf8; padding: 6px 10px; border-radius: 6px; font-weight: bold; }"
             html += ".match-name { font-weight: bold; color: #f8fafc; font-size: 15px; }"
             html += ".champ-name { color: #64748b; font-size: 12px; margin-top: 4px; }"
-            html += ".score { font-family: monospace; font-size: 16px; font-weight: bold; color: #10b981; background: #064e3b; padding: 4px 8px; border-radius: 4px; display: inline-block; }"
+            html += ".score { font-family: monospace; font-size: 16px; font-weight: bold; color: #10b981; background: #064e3b; padding: 4px 8px; border-radius: 4px; }"
             html += ".stats-inline { font-size: 13px; color: #cbd5e1; display: flex; gap: 15px; margin-top: 4px; }"
             html += ".stats-inline span { background: #1e293b; padding: 2px 6px; border-radius: 4px; }"
-            html += ".analysis-box { background: #1e293b; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #38bdf8; font-weight: 500; color: #f1f5f9; }"
+            html += ".analysis-box { background: #1e293b; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #38bdf8; color: #f1f5f9; }"
             html += ".no-data { text-align: center; padding: 40px; color: #64748b; font-style: italic; }"
             html += "</style></head><body>"
             html += "<div class='container'>"
@@ -155,7 +156,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             html += "      });"
             html += "    }"
             html += "    document.getElementById('table-future').innerHTML = htmlFuture;"
-            html += "  } catch(e) { console.error('Errore aggiornamento dashboard:', e); }"
+            html += "  } catch(e) { console.error('Errore:', e); }"
             html += "}"
             html += "setInterval(refreshDashboard, 15000); window.onload = refreshDashboard;"
             html += "</script></body></html>"
@@ -204,12 +205,12 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
                 else: output += "⚠️ <i>Parametri storici bassi (No Bet)</i>"
             else:
                 if somma_medie >= 3.20: output += "📈 <b>STUDIO: Forte pendenza OVER 2.5</b>"
-                elif somma_medie >= 2.40: output += "📊 <b>STUDIO: Ottimo profilo da OVER 1.5</b>"
-                else: output += "📉 <i>STUDIO: Profilo statistico da UNDER</i>"
+                elif somma_medie >= 2.40: output += "📊 <b>STUDIO: Profilo da OVER 1.5</b>"
+                else: output += "📉 <i>STUDIO: Profilo da UNDER</i>"
             return output
-        return "File archivio (.csv) non trovato per questa lega."
+        return "File archivio (.csv) non trovato."
     except Exception: 
-        return "Errore durante l'elaborazione dei dati medi."
+        return "Errore calcolo medie."
 
 def scansione_prematch():
     try:
@@ -290,5 +291,24 @@ def scansione_partite_live():
                                 f"🎯 Tiri in Porta: *{tiri_porta_totali}*\n"
                                 f"💥 Tiri Totali: *{tiri_totali}*\n"
                                 f"⚡ Pressione AP/Min: *{ap_al_minuto}*\n\n"
-                                f"📈 *Studio Storico e Statistiche:*\n{text_clean}"
+                                f"📈 *Studio Storico:*\n{text_clean}"
                             )
+                            invia_telegram(messaggio)
+                            DASHBOARD_DATA["alert_inviati_totale"] += 1
+                            time.sleep(2)
+                            
+            DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
+            salva_dati_su_file()
+    except Exception as e: print(f"Errore Live Scansione: {e}", flush=True)
+
+def invia_telegram(messaggio):
+    try: requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "Markdown"}, timeout=5)
+    except Exception: pass
+
+if __name__ == "__main__":
+    Thread(target=finto_server, daemon=True).start()
+    print("Millenium Bot attivo!", flush=True)
+    while True:
+        scansione_partite_live()
+        scansione_prematch()
+        time.sleep(60)
