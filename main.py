@@ -6,6 +6,8 @@ import requests
 import pandas as pd
 from threading import Thread
 import json
+import calendar
+from datetime import datetime
 
 # ==========================================
 # CONFIGURAZIONI PRINCIPALI
@@ -66,6 +68,35 @@ def salva_dati_su_file():
     except Exception as e:
         print(f"Errore JSON: {e}", flush=True)
 
+def genera_html_calendario():
+    oggi = datetime.now()
+    anno = oggi.year
+    mese = oggi.month
+    giorno_oggi = oggi.day
+    
+    nomi_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+    cal = calendar.monthcalendar(anno, mese)
+    
+    html = f"<div class='cal-box'>"
+    html += f"<div class='cal-title'>📅 {nomi_mesi[mese-1].upper()} {anno}</div>"
+    html += "<div class='cal-grid cal-header-days'>"
+    for d in ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]:
+        html += f"<div>{d}</div>"
+    html += "</div>"
+    
+    for week in cal:
+        html += "<div class='cal-grid'>"
+        for day in week:
+            if day == 0:
+                html += "<div class='cal-day empty'></div>"
+            elif day == giorno_oggi:
+                html += f"<div class='cal-day today'>{day}</div>"
+            else:
+                html += f"<div class='cal-day regular-day'>{day}</div>"
+        html += "</div>"
+    html += "</div>"
+    return html
+
 class DashboardHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args): return
     def do_GET(self):
@@ -80,58 +111,75 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            # Costruzione sicura riga per riga per evitare bug di sintassi
             res = "<html><head><meta charset='utf-8'><title>Millenium Terminal</title>"
             res += "<style>"
             res += "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0f19; color: #e2e8f0; margin: 0; padding: 20px; }"
             res += ".container { max-width: 1200px; margin: 0 auto; }"
             res += "h1 { color: #38bdf8; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }"
-            res += ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }"
-            res += ".card { background: #111827; border: 1px solid #1e293b; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); }"
-            res += ".card h3 { margin: 0 0 10px 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }"
-            res += ".card .value { font-size: 24px; font-weight: bold; color: #f8fafc; }"
+            res += ".layout-main { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }"
+            res += ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }"
+            res += ".card { background: #111827; border: 1px solid #1e293b; padding: 15px; border-radius: 8px; }"
+            res += ".card h3 { margin: 0 0 5px 0; color: #94a3b8; font-size: 12px; text-transform: uppercase; }"
+            res += ".card .value { font-size: 20px; font-weight: bold; color: #f8fafc; }"
             res += ".card .highlight { color: #10b981; }"
-            res += "h2 { color: #f1f5f9; font-size: 20px; margin-top: 40px; margin-bottom: 15px; }"
-            res += "table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; }"
-            res += "th { background: #1e293b; color: #38bdf8; text-align: left; padding: 12px 15px; font-size: 14px; }"
-            res += "td { padding: 12px 15px; border-bottom: 1px solid #1e293b; font-size: 14px; color: #cbd5e1; }"
-            res += "tr:last-child td { border-bottom: none; }"
+            res += "h2 { color: #f1f5f9; font-size: 18px; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #38bdf8; padding-left: 10px; }"
+            res += "table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; margin-bottom: 30px; }"
+            res += "th { background: #1e293b; color: #38bdf8; text-align: left; padding: 12px; font-size: 13px; }"
+            res += "td { padding: 12px; border-bottom: 1px solid #1e293b; font-size: 13px; color: #cbd5e1; }"
             res += "tr:hover { background: #1f2937; }"
-            res += ".badge { background: #0284c7; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }"
+            res += ".badge { background: #0284c7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }"
             res += ".badge-live { background: #dc2626; animation: pulse 2s infinite; }"
+            
+            # NUOVI STILI CALENDARIO RICHIESTI
+            res += ".cal-box { background: #111827; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 25px; }"
+            res += ".cal-title { font-weight: bold; color: #38bdf8; margin-bottom: 15px; font-size: 14px; letter-spacing: 0.05em; }"
+            res += ".cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }"
+            res += ".cal-header-days { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 10px; }"
+            res += ".cal-day { padding: 8px 0; border-radius: 4px; font-size: 12px; font-family: monospace; font-weight: bold; }"
+            res += ".cal-day.empty { background: transparent; }"
+            res += ".cal-day.regular-day { background: #1e3a8a; color: #f59e0b; }"  # Sfondo blu (#1e3a8a) e testo giallo ocra (#f59e0b)
+            res += ".cal-day.today { background: #ffffff; color: #10b981; box-shadow: 0 0 10px rgba(255,255,255,0.3); }"  # Sfondo bianco e testo verde (#10b981)
+            
             res += "@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }"
             res += "</style></head><body><div class='container'>"
             
-            res += "<h1><span>⚡ MILLENIUM TERMINAL</span> <span style='font-size:14px;color:#64748b;'>v2.5 Stable</span></h1>"
+            res += "<h1><span>⚡ MILLENIUM TERMINAL</span> <span style='font-size:14px;color:#64748b;'>Sistema Online</span></h1>"
             
-            # Griglia Statistiche
             res += "<div class='stats-grid'>"
-            res += f"<div class='card'><h3>Ultimo Aggiornamento</h3><div class='value'>{DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
-            res += f"<div class='card'><h3>Match Live Scansionati</h3><div class='value highlight'>{DASHBOARD_DATA['partite_scansionate']}</div></div>"
-            res += f"<div class='card'><h3>Alert Telegram Inviati</h3><div class='value' style='color:#38bdf8;'>{DASHBOARD_DATA['alert_inviati_totale']}</div></div>"
+            res += f"<div class='card'><h3>Ultimo Update</h3><div class='value'>{DASHBOARD_DATA['ultimo_aggiornamento']}</div></div>"
+            res += f"<div class='card'><h3>Live Scansionati</h3><div class='value highlight'>{DASHBOARD_DATA['partite_scansionate']}</div></div>"
+            res += f"<div class='card'><h3>Alert Telegram</h3><div class='value' style='color:#38bdf8;'>{DASHBOARD_DATA['alert_inviati_totale']}</div></div>"
             res += "</div>"
             
-            # Tabella Live
-            res += "<h2>🔥 Match Live Sotto Osservazione</h2>"
+            res += "<div class='layout-main'>"
+            res += "<div class='col-left'>"
+            
+            res += "<h2>🔥 Monitoraggio Live</h2>"
             if not DASHBOARD_DATA["match_rilevanti"]:
-                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;'>Nessun match attivo soddisfa i criteri minimi in questo istante.</div>"
+                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;margin-bottom:30px;'>Nessun match attivo con i parametri minimi richiesti.</div>"
             else:
-                res += "<table><thead><tr><th>Tempo</th><th>Incontro</th><th>Punteggio</th><th>Analisi & Consiglio Strategico</th></tr></thead><tbody>"
+                res += "<table><thead><tr><th>Tempo</th><th>Incontro</th><th>Score</th><th>Consiglio / Archivio CSV</th></tr></thead><tbody>"
                 for m in DASHBOARD_DATA["match_rilevanti"]:
                     res += f"<tr><td><span class='badge badge-live'>{m['orario']}</span></td><td><b>{m['partita']}</b><br><span style='font-size:11px;color:#64748b;'>{m.get('campionato','-')}</span></td><td><span style='font-family:monospace;font-weight:bold;color:#f59e0b;'>{m['punteggio']}</span></td><td>{m['analisi']}</td></tr>"
                 res += "</tbody></table>"
             
-            # Tabella Prematch
-            res += "<h2>📅 Prossimi Match in Palinsesto</h2>"
+            res += "<h2>📅 Palinsesto Prossimi Match</h2>"
             if not DASHBOARD_DATA.get("match_futuri"):
-                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;'>Nessun match futuro programmato in archivio.</div>"
+                res += "<div style='background:#111827;padding:20px;border-radius:8px;border:1px solid #1e293b;color:#64748b;'>Palinsesto prematch momentaneamente vuoto.</div>"
             else:
-                res += "<table><thead><tr><th>Data/Ora</th><th>Incontro</th><th>Campionato</th><th>Studio Statistico Prematch</th></tr></thead><tbody>"
+                res += "<table><thead><tr><th>Ora</th><th>Incontro</th><th>Campionato</th><th>Analisi Prematch</th></tr></thead><tbody>"
                 for mf in DASHBOARD_DATA["match_futuri"]:
-                    res += f"<tr><td><span class='badge'>{mf['data_ora']}</span></td><td><b>{mf['partita']}</b></td><td><span style='color:#94a3b8;'>{mf['campionato']}</span></td><td>{mf['analisi']}</td></tr>"
+                    res += f"<tr><td><span class='badge'>{mf['data_ora']}</span></td><td><b>{mf['partita']}</b></td><td><span style='color:#94a3b8;font-size:11px;'>{mf['campionato']}</span></td><td>{mf['analisi']}</td></tr>"
                 res += "</tbody></table>"
                 
-            res += "</div><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
+            res += "</div>"
+            
+            res += "<div class='col-right'>"
+            res += "<h2>📆 Calendario Mensile</h2>"
+            res += genera_html_calendario()
+            res += "</div>"
+            
+            res += "</div></div><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
             self.wfile.write(res.encode("utf-8"))
         else:
             self.send_error(404, "Not Found")
@@ -143,15 +191,12 @@ def avvia_server():
             server.serve_forever()
     except Exception: pass
 
-# =======================================================
-# LOGICHE DI ANALISI STATISTICA
-# =======================================================
 def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
     file_standard = f"{nome_file_csv}.csv"
     file_maiuscolo = f"{nome_file_csv}.CSV"
     nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
     if not os.path.exists(nome_file):
-        return "Nessun dato CSV disponibile per questa lega."
+        return "Nessun CSV trovato."
     try:
         df = pd.read_csv(nome_file)
         partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
@@ -159,24 +204,21 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
         media_casa = float(partite_casa['FTHG'].mean()) if not partite_casa.empty and 'FTHG' in df.columns else 0.0
         media_fuori = float(partite_ospite['FTAG'].mean()) if not partite_ospite.empty and 'FTAG' in df.columns else 0.0
         somma_medie = media_casa + media_fuori
-        output = f"Media Storica: {somma_medie:.2f} (C: {media_casa:.1f} | F: {media_fuori:.1f}) | "
+        output = f"Media: {somma_medie:.2f} (C:{media_casa:.1f} F:{media_fuori:.1f}) | "
         if is_live and minuto is not None:
             if somma_medie >= 2.40:
-                if minuto <= 35: output += "<span style='color:#10b981;font-weight:bold;'>CONSIGLIO: OVER 0.5 HT</span>"
-                elif minuto <= 65: output += f"<span style='color:#10b981;font-weight:bold;'>CONSIGLIO: OVER {gol_totali + 1.5} LIVE</span>"
-                elif minuto <= 82: output += f"<span style='color:#10b981;font-weight:bold;'>CONSIGLIO: OVER {gol_totali + 0.5} FINALE</span>"
+                if minuto <= 35: output += "<span style='color:#10b981;font-weight:bold;'>OVER 0.5 HT</span>"
+                elif minuto <= 65: output += f"<span style='color:#10b981;font-weight:bold;'>OVER {gol_totali + 1.5} LIVE</span>"
+                elif minuto <= 82: output += f"<span style='color:#10b981;font-weight:bold;'>OVER {gol_totali + 0.5} FINALE</span>"
                 else: output += "No Bet"
-            else: output += "No Bet (Media bassa)"
+            else: output += "No Bet (Storico basso)"
         else:
-            if somma_medie >= 3.20: output += "STUDIO: Prematch OVER 2.5"
-            elif somma_medie >= 2.40: output += "STUDIO: Prematch OVER 1.5"
-            else: output += "STUDIO: Match da UNDER"
+            if somma_medie >= 3.20: output += "STUDIO: OVER 2.5"
+            elif somma_medie >= 2.40: output += "STUDIO: OVER 1.5"
+            else: output += "STUDIO: UNDER"
         return output
-    except Exception: return "Errore elaborazione CSV."
+    except Exception: return "Errore calcolo."
 
-# =======================================================
-# MOTORE DI SCANSIONE
-# =======================================================
 def scansione_partite_live():
     try:
         response = session.get(URL_LIVE, timeout=15)
@@ -240,7 +282,7 @@ def scansione_prematch():
                     ora_inizio = time.strftime('%d/%m %H:%M', time.localtime(timestamp_inizio))
                     prossimi_match.append({
                         "data_ora": ora_inizio, "partita": f"{squadra_casa} - {squadra_ospite}",
-                        "campionato": campeonato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
+                        "campionato": campionato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
                     })
             DASHBOARD_DATA["match_futuri"] = prossimi_match
             salva_dati_su_file()
