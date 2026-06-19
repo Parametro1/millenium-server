@@ -78,45 +78,133 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            badge_campionati = "".join([f'<span class="db-league-badge">{sigla}</span>' for sigla in CAMPIONATI_ALL])
-            righe_campionati_html = "".join([f'<tr><td style="color:#58a6ff; font-weight:700; border-bottom: 1px solid #161b22;">{sigla}</td><td style="color:#8b949e; border-bottom: 1px solid #161b22;">{nome}</td></tr>' for nome, sigla in DIZIONARIO_CAMPIONATI.items()])
+            # Generazione minimale e sicura della pagina senza stringhe multilinea inclini a errori
+            html_parts = [
+                "<!DOCTYPE html><html><head><title>Millenium Terminal</title>",
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>",
+                "<style>body{font-family:sans-serif; background:#010409; color:#c9d1d9; padding:20px;}",
+                ".card{background:#0d1117; padding:15px; border-radius:8px; border:1px solid #21262d; margin-bottom:15px;}",
+                "h1{color:#f0f6fc;} h2{color:#58a6ff; border-bottom:1px solid #21262d; padding-bottom:5px;}",
+                "table{width:100%; border-collapse:collapse;} td,th{padding:10px; border-bottom:1px solid #21262d; text-align:left;}",
+                ".badge{background:#161b22; padding:4px 8px; border-radius:4px; font-weight:bold; color:#58a6ff;}",
+                "</style></head><body>",
+                "<div style='max-width:1200px; margin:0 auto;'>",
+                "<h1>⚡ Millenium Intelligence Terminal</h1>",
+                "<div class='card'>📊 <b>Stato Radar:</b> Connesso | 🔄 <b>Ultimo Aggiornamento:</b> <span id='lu'>-</span> | 🎯 <b>Scansionati:</b> <span id='ps'>0</span></div>",
+                "<h2>🔴 Live Stream Rilevanti</h2>",
+                "<table><thead><tr><th>Minuto</th><th>Match</th><th>Punteggio</th><th>Suggerimento</th></tr></thead><tbody id='live-rows'></tbody></table>",
+                "</div>",
+                "<script>",
+                "async function update(){",
+                "  try{",
+                "    let res = await fetch('/api/data'); let d = await res.json();",
+                "    document.getElementById('lu').innerText = d.ultimo_aggiornamento;",
+                "    document.getElementById('ps').innerText = d.partite_scansionate;",
+                "    let html = '';",
+                "    if(!d.match_rilevanti || d.match_rilevanti.length === 0){",
+                "      html = '<tr><td colspan=\"4\" style=\"text-align:center; color:#8b949e;\">Nessun match live con parametri minimi soddisfatti.</td></tr>';",
+                "    } else {",
+                "      d.match_rilevanti.forEach(m => {",
+                "        html += '<tr><td><span class=\"badge\">' + m.orario + '</span></td><td><b>' + m.partita + '</b><br><small style=\"color:#8b949e;\">' + m.campionato + '</small></td><td>' + m.punteggio + '</td><td style=\"background:#161b22; border-radius:4px;\">' + m.analisi + '</td></tr>';",
+                "      });",
+                "    }",
+                "    document.getElementById('live-rows').innerHTML = html;",
+                "  }catch(e){console.error(e);}",
+                "}",
+                "setInterval(update, 15000); window.onload = update;",
+                "</script></body></html>"
+            ]
+            self.wfile.write("".join(html_parts).encode("utf-8"))
+        else:
+            self.send_error(404, "File Not Found")
 
-            giorni_list = []
-            nomi_giorni = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"]
-            oggi = datetime.now()
-            for i in range(7):
-                d = oggi + timedelta(days=i)
-                tag = "OGGI" if i == 0 else ("DOMANI" if i == 1 else f"{nomi_giorni[d.weekday()]} {d.strftime('%d/%m')}")
-                giorni_list.append({"id": d.strftime("%d/%m"), "label": tag, "is_oggi": i == 0})
+def finto_server():
+    porta = int(os.environ.get("PORT", 10000))
+    try:
+        with TCPServer(("0.0.0.0", porta), DashboardHandler) as server:
+            server.serve_forever()
+    except Exception: pass
+
+# =======================================================
+# LOGICHE DI ANALISI STATISTICA
+# =======================================================
+def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
+    file_standard = f"{nome_file_csv}.csv"
+    file_maiuscolo = f"{nome_file_csv}.CSV"
+    nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
+    try:
+        if os.path.exists(nome_file):
+            df = pd.read_csv(nome_file)
+            partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
+            partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
+            media_casa = partite_casa['FTHG'].mean() if not partite_casa.empty and 'FTHG' in df.columns else 0.0
+            media_fuori = partite_ospite['FTAG'].mean() if not partite_ospite.empty and 'FTAG' in df.columns else 0.0
+            somma_medie = media_casa + media_fuori
             
-            giorni_json = json.dumps(giorni_list)
-            len_campionati = str(len(CAMPIONATI_ALL))
+            output = f"🏠 Media Casa: {media_casa:.2f} | 🚀 Media Fuori: {media_fuori:.2f}<br>"
+            if is_live and minuto is not None:
+                if somma_medie >= 2.40:
+                    if minuto <= 35: output += "<b>💰 CONSIGLIO: OVER 0.5 HT (Quota > 1.70)</b>"
+                    elif minuto <= 65: output += f"<b>💰 CONSIGLIO: OVER {gol_totali + 1.5} LIVE</b>"
+                    elif minuto <= 82: output += f"<b>💰 CONSIGLIO: OVER {gol_totali + 0.5} FINALE</b>"
+                    else: output += "<i>No Bet (Fine match)</i>"
+                else: output += "<i>No Bet (Storico basso)</i>"
+            else:
+                if somma_medie >= 3.20: output += "<b>STUDIO: Pendenza OVER 2.5</b>"
+                elif somma_medie >= 2.40: output += "<b>STUDIO: Ottimo OVER 1.5</b>"
+                else: output += "<i>STUDIO: Match da Under</i>"
+            return output
+        return "File archivio non trovato."
+    except Exception: return "Errore calcolo medie."
 
-            # HTML STRUTTURATO COME STRINGA STANDARD SENZA F-STRING PER EVITARE SYNTAX ERROR
-            html = """<!DOCTYPE html>
-<html>
-<head>
-    <title>Millenium — Professional Trading Terminal</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #010409; color: #c9d1d9; margin:0; padding:25px; box-sizing: border-box; }
-        .container { max-width: 1700px; margin: 0 auto; }
-        .header { background: #0d1117; padding: 20px 30px; border-radius: 12px; border: 1px solid #21262d; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        h1 { color: #f0f6fc; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
-        .status-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .badge { background: #161b22; color: #8b949e; padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; font-size: 13px; font-weight: 600; }
-        .badge span { color: #58a6ff; font-weight: 700; }
-        .badge-online { background: rgba(46, 160, 67, 0.15); color: #3fb950; border-color: rgba(56, 139, 253, 0.15); }
-        .badge-live-count { background: rgba(248, 81, 73, 0.1); color: #f85149; border-color: rgba(248, 81, 73, 0.2); }
-        .controls-panel { background: #0d1117; border: 1px solid #21262d; padding: 20px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
-        .search-box { background: #010409; border: 1px solid #30363d; color: #f0f6fc; padding: 10px 16px; border-radius: 6px; font-size: 14px; width: 320px; transition: border-color 0.2s; }
-        .search-box:focus { outline: none; border-color: #58a6ff; }
-        .db-info { display: flex; flex-direction: column; gap: 8px; flex: 1; max-width: 70%; }
-        .db-title { font-size: 11px; color: #8b949e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-container { display: flex; gap: 6px; flex-wrap: wrap; }
-        .db-league-badge { background: #161b22; color: #c9d1d9; font-weight: 600; font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid #30363d; }
-        .calendar-section { background: #0d1117; border: 1px solid #21262d; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
-        .calendar-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #d29922; margin-bottom: 15px; letter-spacing: 0.5px; }
-        .calendar-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-        .cal-btn { flex: 1; min-width: 125px; padding: 12px 8px; border-radius: 6px; border: 1px solid #21262d; background: #161b22; text-align: center; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s ease; }
-        .cal-btn .cal-sub { font-size: 11px; font-weight: 500; margin-top: 3px; display
+def scansione_prematch():
+    try:
+        response = session.get(URL_FUTURE, timeout=15)
+        if response.status_code == 200:
+            partite = response.json().get("Value", [])
+            prossimi_match = []
+            for partita in partite:
+                campionato = partita.get("L", "")
+                squadra_casa = partita.get("O1", "")
+                squadra_ospite = partita.get("O2", "")
+                timestamp_inizio = partita.get("S", 0)
+                if campeonato in DIZIONARIO_CAMPIONATI and timestamp_inizio > 0:
+                    nome_file_csv = DIZIONARIO_CAMPIONATI[campionato]
+                    ora_inizio = time.strftime('%d/%m %H:%M', time.localtime(timestamp_inizio))
+                    prossimi_match.append({
+                        "data_ora": ora_inizio, "partita": f"{squadra_casa} - {squadra_ospite}",
+                        "campionato": campionato, "analisi": analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, is_live=False)
+                    })
+            DASHBOARD_DATA["match_futuri"] = prossimi_match
+            salva_dati_su_file()
+    except Exception as e: print(f"⚠️ Timeout Prematch: {e}", flush=True)
+
+def scansione_partite_live():
+    try:
+        response = session.get(URL_LIVE, timeout=15)
+        if response.status_code == 200:
+            partite = response.json().get("Value", [])
+            DASHBOARD_DATA["partite_scansionate"] = len(partite)
+            DASHBOARD_DATA["ultimo_aggiornamento"] = time.strftime("%H:%M:%S")
+            nuovi_match_rilevanti = []
+            
+            for partita in partite:
+                campionato_live = partita.get("L", "")
+                squadra_casa = partita.get("O1", "")
+                squadra_ospite = partita.get("O2", "")
+                if campeonato_live in DIZIONARIO_CAMPIONATI:
+                    nome_file_csv = DIZIONARIO_CAMPIONATI[campionato_live]
+                    sc_data = partita.get("SC", {})
+                    tempo_secondi = sc_data.get("TS", 0)
+                    minuto_corrente = int(tempo_secondi // 60) if tempo_secondi > 0 else 1
+                    gol_casa, gol_ospite = int(sc_data.get("FS", {}).get("G1", 0)), int(sc_data.get("FS", {}).get("G2", 0))
+                    totale_gol_attuali = gol_casa + gol_ospite
+                    
+                    tiri_porta_casa, tiri_porta_ospite = 0, 0
+                    tiri_fuori_casa, tiri_fuori_ospite = 0, 0
+                    ap_casa, ap_ospite = 0, 0
+                    
+                    for stat in sc_data.get("S", []):
+                        tipo_stat = stat.get("T")
+                        if tipo_stat == 2:
+                            tiri_porta_casa, tiri_porta_ospite = int(stat.get("G1", 0
