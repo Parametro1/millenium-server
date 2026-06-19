@@ -142,7 +142,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             
             res += ".container { max-width: 1250px; margin: 25px auto; padding: 0 15px; }"
             res += ".layout-main { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }"
-            @media (max-width: 950px) { .layout-main { grid-template-columns: 1fr; } }
+            res += "@media (max-width: 950px) { .layout-main { grid-template-columns: 1fr; } }"
             
             # CARD STATISTICHE SFONDO GRIGIO
             res += ".stats-row { display: flex; gap: 15px; margin-bottom: 25px; }"
@@ -154,16 +154,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += ".section-header { background: #e2e8f0; border: 1px solid #cbd5e1; border-bottom: 2px solid #cbd5e1; border-top-left-radius: 10px; border-top-right-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }"
             res += ".section-title { font-size: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }"
             
-            # 🌟 NUOVA BARRA DI RICERCA GIALLO OCRA AD ALTO CONTRASTO
+            # 🌟 BARRA DI RICERCA GIALLO OCRA AD ALTO CONTRASTO
             res += ".sof-search { background: #d97706; border: 1px solid #b45309; color: #ffffff; border-radius: 20px; padding: 7px 16px; font-size: 13px; outline: none; width: 210px; font-weight: 600; transition: all 0.2s ease; }"
             res += ".sof-search::placeholder { color: rgba(255, 255, 255, 0.85); }"
             res += ".sof-search:focus { background: #b45309; border-color: #78350f; width: 250px; box-shadow: 0 0 0 3px rgba(217,119,6,0.3); }"
             
             # SCHEDE MATCH SFONDO GRIGIO CHIARO
-            res += ".match-list { background: #f8fafc; border: 1px solid #cbd5e1; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }"
+            res += ".match-list { background: #e2e8f0; border: 1px solid #cbd5e1; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }"
             res += ".match-row { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #cbd5e1; transition: background 0.15s; }"
             res += ".match-row:last-child { border-bottom: none; }"
-            res += ".match-row:hover { background-color: #e2e8f0; }"
+            res += ".match-row:hover { background-color: #cbd5e1; }"
             
             res += ".match-time-block { width: 65px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; font-size: 13px; font-weight: 700; color: #475569; }"
             res += ".match-time-block.live { color: #ef4444; animation: blinker 1.5s linear infinite; }"
@@ -177,12 +177,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             
             res += ".match-analysis-block { min-width: 340px; padding-left: 20px; display: flex; align-items: center; justify-content: flex-end; }"
             res += ".sof-quote-box { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; width: 100%; text-align: left; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }"
-            res += ".sof-quote-box.prematch { background: #e2e8f0; border-color: #cbd5e1; color: #334155; }"
+            res += ".sof-quote-box.prematch { background: #cbd5e1; border-color: #cbd5e1; color: #334155; }"
             
             res += ".sof-live-badge { background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px; }"
-            res += ".sof-badge-file { background: #e2e8f0; border: 1px solid #cbd5e1; color: #334155; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }"
+            res += ".sof-badge-file { background: #cbd5e1; border: 1px solid #cbd5e1; color: #334155; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }"
             
-            res += "table { width: 100%; border-collapse: collapse; background: #f8fafc; }"
+            res += "table { width: 100%; border-collapse: collapse; background: #e2e8f0; }"
             res += "th { background: #cbd5e1; color: #1e293b; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 12px 16px; border-bottom: 1px solid #cbd5e1; text-align: left; }"
             res += "td { padding: 12px 16px; border-bottom: 1px solid #cbd5e1; font-size: 13px; color: #1e293b; }"
             
@@ -216,7 +216,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += "<div class='section-header'><div class='section-title'>⚽ Risultati in Diretta (Live)</div><input type='text' class='sof-search' id='searchLive' placeholder='Cerca live...' onkeyup='filterSofRows(\"searchLive\", \"liveList\")'></div>"
             res += "<div class='match-list' id='liveList'>"
             if not DASHBOARD_DATA["match_rilevanti"]:
-                res += "<div style='padding:40px; color:#475569; text-align:center; font-size:13px; font-style:italic; background:#f8fafc;'>Nessun match attivo soddisfa i filtri AP/Tiri impostati.</div>"
+                res += "<div style='padding:40px; color:#475569; text-align:center; font-size:13px; font-style:italic; background:#e2e8f0;'>Nessun match attivo soddisfa i filtri AP/Tiri impostati.</div>"
             else:
                 for m in DASHBOARD_DATA["match_rilevanti"]:
                     squadre = m['partita'].split(" - ")
@@ -248,7 +248,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += "<div class='section-header'><div class='section-title'>📅 Palinsesto Prossimi Match</div><input type='text' class='sof-search' id='searchPrematch' placeholder='Cerca palinsesto...' onkeyup='filterSofRows(\"searchPrematch\", \"prematchList\")'></div>"
             res += "<div class='match-list' id='prematchList'>"
             if not DASHBOARD_DATA.get("match_futuri"):
-                res += "<div style='padding:40px; color:#475569; text-align:center; font-size:13px; font-style:italic; background:#f8fafc;'>Palinsesto prematch vuoto o mercati chiusi temporaneamente.</div>"
+                res += "<div style='padding:40px; color:#475569; text-align:center; font-size:13px; font-style:italic; background:#e2e8f0;'>Palinsesto prematch vuoto o mercati chiusi temporaneamente.</div>"
             else:
                 for mf in DASHBOARD_DATA["match_futuri"]:
                     squadre_f = mf['partita'].split(" - ")
@@ -338,41 +338,4 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
             elif somma_medie >= 2.40: output += "<b>🔍 OVER 1.5</b>"
             else: output += "<b>🔍 UNDER</b>"
         return output
-    except Exception: return "Errore calcolo."
-
-def scansione_partite_live():
-    try:
-        response = session.get(URL_LIVE, timeout=15)
-        if response.status_code == 200:
-            partite = response.json().get("Value", [])
-            DASHBOARD_DATA["partite_scansionate"] = len(partite)
-            DASHBOARD_DATA["ultimo_aggiornamento"] = time.strftime("%H:%M:%S")
-            nuovi_match_rilevanti = []
-            for partita in partite:
-                campionato_live = partita.get("L", "")
-                squadra_casa = partita.get("O1", "")
-                squadra_ospite = partita.get("O2", "")
-                if campeonato_live in DIZIONARIO_CAMPIONATI:
-                    nome_file_csv = DIZIONARIO_CAMPIONATI[campionato_live]
-                    sc_data = partita.get("SC", {})
-                    tempo_secondi = sc_data.get("TS", 0)
-                    minuto_corrente = int(tempo_secondi // 60) if tempo_secondi > 0 else 1
-                    fs_data = sc_data.get("FS", {})
-                    gol_casa, gol_ospite = int(fs_data.get("G1", 0)), int(fs_data.get("G2", 0))
-                    totale_gol_attuali = gol_casa + gol_ospite
-                    tiri_porta_casa, tiri_porta_ospite = 0, 0
-                    tiri_totali, ap_totali = 0, 0
-                    for stat in sc_data.get("S", []):
-                        t = stat.get("T")
-                        if t == 2: tiri_porta_casa, tiri_porta_ospite = int(stat.get("G1", 0)), int(stat.get("G2", 0))
-                        elif t == 1: tiri_totali += int(stat.get("G1", 0)) + int(stat.get("G2", 0))
-                        elif t == 3: ap_totali = int(stat.get("G1", 0)) + int(stat.get("G2", 0))
-                    tiri_porta_totali = tiri_porta_casa + tiri_porta_ospite
-                    tiri_totali += tiri_porta_totali
-                    ap_al_minuto = round(ap_totali / minuto_corrente, 2) if minuto_corrente > 0 else 0.0
-                    
-                    if tiri_totali > 0 or ap_totali > 0:
-                        analisi_output = analizza_e_consiglia(nome_file_csv, squadra_casa, squadra_ospite, minuto=minuto_corrente, gol_totali=totale_gol_attuali, is_live=True)
-                        nuovi_match_rilevanti.append({
-                            "orario": f"{minuto_corrente}'", "partita": f"{squadra_casa} - {squadra_ospite}",
-                            "punteggio": f"{gol_casa} - {gol_ospite}", "campionato": campionato_live, "analisi":
+    except
