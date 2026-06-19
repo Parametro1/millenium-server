@@ -75,20 +75,92 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            res_html = "<html><head><title>Terminal</title></head><body style='font-family:sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;'>"
-            res_html += "<h1>⚡ Millenium Terminal ⚡</h1>"
-            res_html += "<div><p><b>Ultimo Aggiornamento:</b> " + str(DASHBOARD_DATA["ultimo_aggiornamento"]) + "</p>"
-            res_html += "<p><b>Partite Scansionate:</b> " + str(DASHBOARD_DATA["partite_scansionate"]) + "</p></div>"
-            res_html += "<h2>Partite Live Rilevanti</h2><ul>"
+            # RICOSTRUZIONE DELLA GRAFICA PREMIUM (Divisa in stringhe singole per evitare errori di sintassi)
+            html = "<!DOCTYPE html><html><head><title>Millenium Terminal</title>"
+            html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+            html += "<style>"
+            html += "body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0b0e14; color: #e2e8f0; margin: 0; padding: 20px; }"
+            html += ".container { max-width: 1200px; margin: 0 auto; }"
+            html += "h1 { color: #f1f5f9; display: flex; align-items: center; gap: 10px; margin-bottom: 25px; font-size: 28px; }"
+            html += ".grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }"
+            html += ".card-stat { background: #151d2a; padding: 20px; border-radius: 12px; border: 1px solid #233247; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }"
+            html += ".card-stat label { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }"
+            html += ".card-stat div { font-size: 22px; font-weight: bold; color: #38bdf8; }"
+            html += "h2 { color: #38bdf8; font-size: 20px; margin-top: 40px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; }"
+            html += ".table-wrapper { background: #151d2a; border-radius: 12px; border: 1px solid #233247; overflow: hidden; margin-top: 15px; }"
+            html += "table { width: 100%; border-collapse: collapse; text-align: left; }"
+            html += "th { background: #1e293b; padding: 14px 16px; font-size: 14px; color: #94a3b8; font-weight: 600; }"
+            html += "td { padding: 16px; border-bottom: 1px solid #233247; font-size: 14px; vertical-align: middle; }"
+            html += ".badge-time { background: #0c4a6e; color: #38bdf8; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-family: monospace; }"
+            html += ".match-name { font-weight: bold; color: #f8fafc; font-size: 15px; }"
+            html += ".champ-name { color: #64748b; font-size: 12px; margin-top: 4px; }"
+            html += ".score { font-family: monospace; font-size: 16px; font-weight: bold; color: #10b981; background: #064e3b; padding: 4px 8px; border-radius: 4px; display: inline-block; }"
+            html += ".stats-inline { font-size: 13px; color: #cbd5e1; display: flex; gap: 15px; margin-top: 4px; }"
+            html += ".stats-inline span { background: #1e293b; padding: 2px 6px; border-radius: 4px; }"
+            html += ".analysis-box { background: #1e293b; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #38bdf8; font-weight: 500; color: #f1f5f9; }"
+            html += ".no-data { text-align: center; padding: 40px; color: #64748b; font-style: italic; }"
+            html += "</style></head><body>"
+            html += "<div class='container'>"
+            html += "<h1>⚡ Millenium Intelligence Terminal ⚡</h1>"
+            html += "<div class='grid-stats'>"
+            html += "  <div class='card-stat'><label>📡 Stato Radar</label><div style='color:#10b981;'>ATTIVO</div></div>"
+            html += "  <div class='card-stat'><label>🔄 Ultimo Aggiornamento</label><div id='stat-update'>-</div></div>"
+            html += "  <div class='card-stat'><label>⚽ Partite Scansionate</label><div id='stat-scanned'>0</div></div>"
+            html += "  <div class='card-stat'><label>🔔 Alert Inviati</label><div id='stat-alerts' style='color:#f59e0b;'>0</div></div>"
+            html += "</div>"
+            html += "<h2>🔴 Live Match Monitorati</h2>"
+            html += "<div class='table-wrapper'><table>"
+            html += "<thead><tr><th>Tempo</th><th>Incontro / Statistiche Live</th><th>Score</th><th>Studio & Consiglio Automatico</th></tr></thead>"
+            html += "<tbody id='table-live'></tbody>"
+            html += "</table></div>"
+            html += "<h2>📅 Analisi Prematch (Prossimi Match)</h2>"
+            html += "<div class='table-wrapper'><table>"
+            html += "<thead><tr><th>Orario</th><th>Incontro</th><th>Campionato</th><th>Analisi Algoritmo</th></tr></thead>"
+            html += "<tbody id='table-future'></tbody>"
+            html += "</table></div>"
+            html += "</div>"
+            html += "<script>"
+            html += "async function refreshDashboard() {"
+            html += "  try {"
+            html += "    let r = await fetch('/api/data'); let d = await r.json();"
+            html += "    document.getElementById('stat-update').innerText = d.ultimo_aggiornamento || 'Mai';"
+            html += "    document.getElementById('stat-scanned').innerText = d.partite_scansionate || 0;"
+            html += "    document.getElementById('stat-alerts').innerText = d.alert_inviati_totale || 0;"
+            html += "    let htmlLive = '';"
+            html += "    if(!d.match_rilevanti || d.match_rilevanti.length === 0) {"
+            html += "      htmlLive = '<tr><td colspan=\"4\" class=\"no-data\">Nessun match live soddisfa i parametri minimi di attacco in questo momento.</td></tr>';"
+            html += "    } else {"
+            html += "      d.match_rilevanti.forEach(m => {"
+            html += "        htmlLive += '<tr>';"
+            html += "        htmlLive += '<td><span class=\"badge-time\">' + m.orario + '</span></td>';"
+            html += "        htmlLive += '<td><div class=\"match-name\">' + m.partita + '</div><div class=\"champ-name\">' + m.campionato + '</div>';"
+            html += "        htmlLive += '<div class=\"stats-inline\"><span>🎯 Porta: ' + m.tiri_porta + '</span><span>💥 Totali: ' + m.tiri_totali + '</span><span>⚡ AP/Min: ' + m.ap_minuto + '</span></div></td>';"
+            html += "        htmlLive += '<td><span class=\"score\">' + m.punteggio + '</span></td>';"
+            html += "        htmlLive += '<td><div class=\"analysis-box\">' + m.analisi + '</div></td>';"
+            html += "        htmlLive += '</tr>';"
+            html += "      });"
+            html += "    }"
+            html += "    document.getElementById('table-live').innerHTML = htmlLive;"
+            html += "    let htmlFuture = '';"
+            html += "    if(!d.match_futuri || d.match_futuri.length === 0) {"
+            html += "      htmlFuture = '<tr><td colspan=\"4\" class=\"no-data\">Nessun match programmato nei campionati in archivio.</td></tr>';"
+            html += "    } else {"
+            html += "      d.match_futuri.forEach(m => {"
+            html += "        htmlFuture += '<tr>';"
+            html += "        htmlFuture += '<td><span class=\"badge-time\" style=\"background:#1e293b; color:#94a3b8;\">' + m.data_ora + '</span></td>';"
+            html += "        htmlFuture += '<td class=\"match-name\">' + m.partita + '</td>';"
+            html += "        <td class=\"champ-name\" style=\"font-size:14px;\">' + m.campionato + '</td>';"
+            html += "        <td><div class=\"analysis-box\" style=\"border-left-color:#10b981;\">' + m.analisi + '</div></td>';"
+            html += "        htmlFuture += '</tr>';"
+            html += "      });"
+            html += "    }"
+            html += "    document.getElementById('table-future').innerHTML = htmlFuture;"
+            html += "  } catch(e) { console.error('Errore aggiornamento dashboard:', e); }"
+            html += "}"
+            html += "setInterval(refreshDashboard, 15000); window.onload = refreshDashboard;"
+            html += "</script></body></html>"
             
-            if not DASHBOARD_DATA["match_rilevanti"]:
-                res_html += "<li>Nessun match attivo con i parametri minimi richiesti.</li>"
-            else:
-                for m in DASHBOARD_DATA["match_rilevanti"]:
-                    res_html += "<li><b>" + str(m["partita"]) + "</b> (" + str(m["orario"]) + ") - Risultato: " + str(m["punteggio"]) + "<br>" + str(m["analisi"]) + "</li>"
-            
-            res_html += "</ul><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
-            self.wfile.write(res_html.encode("utf-8"))
+            self.wfile.write(html.encode("utf-8"))
         else:
             self.send_error(404, "Not Found")
 
@@ -100,7 +172,7 @@ def finto_server():
     except Exception: pass
 
 # =======================================================
-# LOGICHE DI ANALISI STATISTICA (CORRETTA)
+# LOGICHE DI ANALISI STATISTICA
 # =======================================================
 def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
     file_standard = f"{nome_file_csv}.csv"
@@ -121,23 +193,23 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
                 media_fuori = float(partite_ospite['FTAG'].mean())
                 
             somma_medie = media_casa + media_fuori
-            output = f"Media Casa: {media_casa:.2f} | Media Fuori: {media_fuori:.2f} | "
+            output = f"📊 Media Storica Goal: {somma_medie:.2f} (Casa: {media_casa:.2f} | Fuori: {media_fuori:.2f})<br>"
             
             if is_live and minuto is not None:
                 if somma_medie >= 2.40:
-                    if minuto <= 35: output += "CONSIGLIO: OVER 0.5 HT"
-                    elif minuto <= 65: output += f"CONSIGLIO: OVER {gol_totali + 1.5} LIVE"
-                    elif minuto <= 82: output += f"CONSIGLIO: OVER {gol_totali + 0.5} FINALE"
-                    else: output += "No Bet (Fine match)"
-                else: output += "No Bet (Storico basso)"
+                    if minuto <= 35: output += "🔥 <b>CONSIGLIO: OVER 0.5 HT (Quota > 1.70)</b>"
+                    elif minuto <= 65: output += f"🔥 <b>CONSIGLIO: OVER {gol_totali + 1.5} LIVE</b>"
+                    elif minuto <= 82: output += f"🔥 <b>CONSIGLIO: OVER {gol_totali + 0.5} FINALE</b>"
+                    else: output += "⏱️ <i>Match alle battute finali (No Bet)</i>"
+                else: output += "⚠️ <i>Parametri storici bassi (No Bet)</i>"
             else:
-                if somma_medie >= 3.20: output += "STUDIO: Pendenza OVER 2.5"
-                elif somma_medie >= 2.40: output += "STUDIO: Ottimo OVER 1.5"
-                else: output += "STUDIO: Match da Under"
+                if somma_medie >= 3.20: output += "📈 <b>STUDIO: Forte pendenza OVER 2.5</b>"
+                elif somma_medie >= 2.40: output += "📊 <b>STUDIO: Ottimo profilo da OVER 1.5</b>"
+                else: output += "📉 <i>STUDIO: Profilo statistico da UNDER</i>"
             return output
-        return "File archivio non trovato."
+        return "File archivio (.csv) non trovato per questa lega."
     except Exception: 
-        return "Errore calcolo medie."
+        return "Errore durante l'elaborazione dei dati medi."
 
 def scansione_prematch():
     try:
@@ -210,31 +282,13 @@ def scansione_partite_live():
                         })
                         
                         if (ap_al_minuto >= 1.15 and minuto_corrente >= 15 and tiri_totali >= 4) or (tiri_porta_totali >= 5):
+                            text_clean = analisi_output.replace("<b>", "*").replace("</b>", "*").replace("<i>", "_").replace("</i>", "_").replace("<br>", "\n")
                             messaggio = (
-                                f"🔥 MILLENIUM ATTACCO IN CORSO 🔥\n\n"
-                                f"Match: {squadra_casa} - {squadra_ospite}\n"
-                                f"Minuto: {minuto_corrente}' | Score: {gol_casa}-{gol_ospite}\n\n"
-                                f"Tiri in Porta: {tiri_porta_totali}\n"
-                                f"Tiri Totali: {tiri_totali}\n"
-                                f"Pressione AP/Min: {ap_al_minuto}\n\n"
-                                f"Studio Storico:\n{analisi_output}"
+                                f"🔥 *MILLENIUM ATTACCO IN CORSO* 🔥\n\n"
+                                f"⚽ *Match:* {squadra_casa} - {squadra_ospite}\n"
+                                f"⏱️ *Minuto:* {minuto_corrente}' | 📊 *Score:* {gol_casa}-{gol_ospite}\n\n"
+                                f"🎯 Tiri in Porta: *{tiri_porta_totali}*\n"
+                                f"💥 Tiri Totali: *{tiri_totali}*\n"
+                                f"⚡ Pressione AP/Min: *{ap_al_minuto}*\n\n"
+                                f"📈 *Studio Storico e Statistiche:*\n{text_clean}"
                             )
-                            invia_telegram(messaggio)
-                            DASHBOARD_DATA["alert_inviati_totale"] += 1
-                            time.sleep(2)
-                            
-            DASHBOARD_DATA["match_rilevanti"] = nuovi_match_rilevanti
-            salva_dati_su_file()
-    except Exception as e: print(f"Errore Live Scansione: {e}", flush=True)
-
-def invia_telegram(messaggio):
-    try: requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": messaggio}, timeout=5)
-    except Exception: pass
-
-if __name__ == "__main__":
-    Thread(target=finto_server, daemon=True).start()
-    print("Millenium Bot attivo!", flush=True)
-    while True:
-        scansione_partite_live()
-        scansione_prematch()
-        time.sleep(60)
