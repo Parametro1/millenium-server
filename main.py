@@ -97,6 +97,26 @@ def genera_html_calendario():
     html += "</div>"
     return html
 
+def genera_html_archivio():
+    # Estraiamo i campionati che sono attualmente live per cambiare colore
+    campionati_attivi = [m.get("campionato", "") for m in DASHBOARD_DATA.get("match_rilevanti", [])]
+    
+    html = "<table style='margin-top:10px;'><thead><tr><th>Stato</th><th>Lega</th><th>File</th></tr></thead><tbody>"
+    for nome, codice in DIZIONARIO_CAMPIONATI.items():
+        pulito = nome.replace("Calcio. ", "")
+        
+        # Se il campionato ha un match live, diventa rosso con pallino rosso
+        if nome in campionati_attivi:
+            stato = "<span style='animation: pulse 1.5s infinite;'>🔴 LIVE</span>"
+            stile_testo = "color: #ef4444; font-weight: bold;" # Rosso acceso
+        else:
+            stato = "🟢"
+            stile_testo = "color: #cbd5e1;" # Grigio/Bianco standard
+            
+        html += f"<tr><td>{stato}</td><td style='font-size:12px; {stile_testo}'><b>{pulito}</b></td><td><span class='badge' style='background:#475569;'>{codice}.csv</span></td></tr>"
+    html += "</tbody></table>"
+    return html
+
 class DashboardHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args): return
     def do_GET(self):
@@ -116,13 +136,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0f19; color: #e2e8f0; margin: 0; padding: 20px; }"
             res += ".container { max-width: 1200px; margin: 0 auto; }"
             res += "h1 { color: #38bdf8; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }"
-            res += ".layout-main { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }"
+            res += ".layout-main { display: grid; grid-template-columns: 1fr 360px; gap: 30px; }"
+            res += "@media (max-width: 900px) { .layout-main { grid-template-columns: 1fr; } }"
             res += ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }"
             res += ".card { background: #111827; border: 1px solid #1e293b; padding: 15px; border-radius: 8px; }"
             res += ".card h3 { margin: 0 0 5px 0; color: #94a3b8; font-size: 12px; text-transform: uppercase; }"
             res += ".card .value { font-size: 20px; font-weight: bold; color: #f8fafc; }"
             res += ".card .highlight { color: #10b981; }"
-            res += "h2 { color: #f1f5f9; font-size: 18px; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #38bdf8; padding-left: 10px; }"
+            res += "h2 { color: #f1f5f9; font-size: 17px; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #38bdf8; padding-left: 10px; text-transform: uppercase; letter-spacing: 0.05em; }"
             res += "table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; margin-bottom: 30px; }"
             res += "th { background: #1e293b; color: #38bdf8; text-align: left; padding: 12px; font-size: 13px; }"
             res += "td { padding: 12px; border-bottom: 1px solid #1e293b; font-size: 13px; color: #cbd5e1; }"
@@ -130,15 +151,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += ".badge { background: #0284c7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }"
             res += ".badge-live { background: #dc2626; animation: pulse 2s infinite; }"
             
-            # NUOVI STILI CALENDARIO RICHIESTI
+            # STILI CALENDARIO
             res += ".cal-box { background: #111827; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 25px; }"
             res += ".cal-title { font-weight: bold; color: #38bdf8; margin-bottom: 15px; font-size: 14px; letter-spacing: 0.05em; }"
             res += ".cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }"
             res += ".cal-header-days { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 10px; }"
             res += ".cal-day { padding: 8px 0; border-radius: 4px; font-size: 12px; font-family: monospace; font-weight: bold; }"
             res += ".cal-day.empty { background: transparent; }"
-            res += ".cal-day.regular-day { background: #1e3a8a; color: #f59e0b; }"  # Sfondo blu (#1e3a8a) e testo giallo ocra (#f59e0b)
-            res += ".cal-day.today { background: #ffffff; color: #10b981; box-shadow: 0 0 10px rgba(255,255,255,0.3); }"  # Sfondo bianco e testo verde (#10b981)
+            res += ".cal-day.regular-day { background: #1e3a8a; color: #f59e0b; }"
+            res += ".cal-day.today { background: #ffffff; color: #10b981; box-shadow: 0 0 10px rgba(255,255,255,0.3); }"
             
             res += "@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }"
             res += "</style></head><body><div class='container'>"
@@ -175,8 +196,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += "</div>"
             
             res += "<div class='col-right'>"
-            res += "<h2>📆 Calendario Mensile</h2>"
+            res += "<h2>📆 Calendario</h2>"
             res += genera_html_calendario()
+            
+            res += "<h2 style='margin-top:20px;'>🗄️ Campionati in Archivio</h2>"
+            res += genera_html_archivio()
             res += "</div>"
             
             res += "</div></div><script>setTimeout(function(){ location.reload(); }, 15000);</script></body></html>"
