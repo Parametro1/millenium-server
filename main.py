@@ -132,7 +132,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             
             res = "<html><head><meta charset='utf-8'><title>Millenium Bot Pro</title>"
             res += "<style>"
-            res += "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; color: #1e293b; margin: 0; padding: 0; }"
+            res += "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #cbd5e1; color: #1e293b; margin: 0; padding: 0; }"
             
             # NAVBAR PRINCIPALE (MILLENIUM BOT)
             res += ".sof-header { background-color: #0f172a; color: #ffffff; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }"
@@ -154,12 +154,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             res += ".section-header { background: #e2e8f0; border: 1px solid #cbd5e1; border-bottom: 2px solid #cbd5e1; border-top-left-radius: 10px; border-top-right-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }"
             res += ".section-title { font-size: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }"
             
-            # 🌟 BARRA DI RICERCA GIALLO OCRA AD ALTO CONTRASTO
+            # BARRA DI RICERCA GIALLO OCRA AD ALTO CONTRASTO
             res += ".sof-search { background: #d97706; border: 1px solid #b45309; color: #ffffff; border-radius: 20px; padding: 7px 16px; font-size: 13px; outline: none; width: 210px; font-weight: 600; transition: all 0.2s ease; }"
             res += ".sof-search::placeholder { color: rgba(255, 255, 255, 0.85); }"
             res += ".sof-search:focus { background: #b45309; border-color: #78350f; width: 250px; box-shadow: 0 0 0 3px rgba(217,119,6,0.3); }"
             
-            # SCHEDE MATCH SFONDO GRIGIO CHIARO
+            # SCHEDE MATCH SFONDO GRIGIO
             res += ".match-list { background: #e2e8f0; border: 1px solid #cbd5e1; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }"
             res += ".match-row { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #cbd5e1; transition: background 0.15s; }"
             res += ".match-row:last-child { border-bottom: none; }"
@@ -247,95 +247,4 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             # SEZIONE PREMATCH CON BARRE GIALLO OCRA
             res += "<div class='section-header'><div class='section-title'>📅 Palinsesto Prossimi Match</div><input type='text' class='sof-search' id='searchPrematch' placeholder='Cerca palinsesto...' onkeyup='filterSofRows(\"searchPrematch\", \"prematchList\")'></div>"
             res += "<div class='match-list' id='prematchList'>"
-            if not DASHBOARD_DATA.get("match_futuri"):
-                res += "<div style='padding:40px; color:#475569; text-align:center; font-size:13px; font-style:italic; background:#e2e8f0;'>Palinsesto prematch vuoto o mercati chiusi temporaneamente.</div>"
-            else:
-                for mf in DASHBOARD_DATA["match_futuri"]:
-                    squadre_f = mf['partita'].split(" - ")
-                    casa_f = squadre_f[0] if len(squadre_f) > 0 else "Team Casa"
-                    ospite_f = squadre_f[1] if len(squadre_f) > 1 else "Team Ospite"
-                    
-                    res += f"<div class='match-row'>"
-                    res += f"  <div class='match-time-block' style='color:#3b82f6; font-size:11px;'>{mf['data_ora']}</div>"
-                    res += f"  <div class='match-teams-block'>"
-                    res += f"    <div class='team-row'><span>{casa_f}</span></div>"
-                    res += f"    <div class='team-row'><span>{ospite_f}</span></div>"
-                    res += f"    <div class='league-subtitle'>{mf['campionato']}</div>"
-                    res += f"  </div>"
-                    res += f"  <div class='match-scores-block' style='border-right:none; color:#64748b;'>VS</div>"
-                    res += f"  <div class='match-analysis-block'>"
-                    res += f"    <div class='sof-quote-box prematch'>{mf['analisi']}</div>"
-                    res += f"  </div>"
-                    res += f"</div>"
-            res += "</div>"
-            
-            res += "</div>"
-            
-            # COLONNA DESTRA
-            res += "<div class='col-right'>"
-            res += "<div class='section-header' style='margin-top:0; border-radius:10px 10px 0 0;'><div class='section-title'>🗓️ Calendario Operativo</div></div>"
-            res += genera_html_calendario()
-            
-            res += "<div class='section-header' style='border-radius:10px 10px 0 0; margin-top:25px;'><div class='section-title'>🗄️ Database Storici (.CSV)</div></div>"
-            res += genera_html_archivio()
-            res += "</div>"
-            
-            res += "</div></div>"
-            
-            res += "<script>"
-            res += "function filterSofRows(inputId, listId) {"
-            res += "  var input = document.getElementById(inputId);"
-            res += "  var filter = input.value.toUpperCase();"
-            res += "  var container = document.getElementById(listId);"
-            res += "  if(!container) return;"
-            res += "  var rows = container.getElementsByClassName('match-row');"
-            res += "  for (var i = 0; i < rows.length; i++) {"
-            res += "    var text = rows[i].textContent || rows[i].innerText;"
-            res += "    if (text.toUpperCase().indexOf(filter) > -1) {"
-            res += "      rows[i].style.display = 'flex';"
-            res += "    } else {"
-            res += "      rows[i].style.display = 'none';"
-            res += "    }"
-            res += "  }"
-            res += "}"
-            res += "setTimeout(function(){ location.reload(); }, 15000);"
-            res += "</script></body></html>"
-            
-            self.wfile.write(res.encode("utf-8"))
-        else:
-            self.send_error(404, "Not Found")
-
-def avvia_server():
-    porta = int(os.environ.get("PORT", 10000))
-    try:
-        with TCPServer(("0.0.0.0", porta), DashboardHandler) as server:
-            server.serve_forever()
-    except Exception: pass
-
-def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
-    file_standard = f"{nome_file_csv}.csv"
-    file_maiuscolo = f"{nome_file_csv}.CSV"
-    nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
-    if not os.path.exists(nome_file):
-        return "Nessun CSV trovato."
-    try:
-        df = pd.read_csv(nome_file)
-        partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
-        partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
-        media_casa = float(partite_casa['FTHG'].mean()) if not partite_casa.empty and 'FTHG' in df.columns else 0.0
-        media_fuori = float(partite_ospite['FTAG'].mean()) if not partite_ospite.empty and 'FTAG' in df.columns else 0.0
-        somma_medie = media_casa + media_fuori
-        output = f"📊 Media: {somma_medie:.2f} (C:{media_casa:.1f} F:{media_fuori:.1f}) | "
-        if is_live and minuto is not None:
-            if somma_medie >= 2.40:
-                if minuto <= 35: output += "<b style='color:#166534;'>💥 OVER 0.5 HT</b>"
-                elif minuto <= 65: output += f"<b style='color:#166534;'>💥 OVER {gol_totali + 1.5}</b>"
-                elif minuto <= 82: output += f"<b style='color:#166534;'>💥 OVER {gol_totali + 0.5}</b>"
-                else: output += "No Bet"
-            else: output += "No Bet (Storico basso)"
-        else:
-            if somma_medie >= 3.20: output += "<b>🔍 OVER 2.5</b>"
-            elif somma_medie >= 2.40: output += "<b>🔍 OVER 1.5</b>"
-            else: output += "<b>🔍 UNDER</b>"
-        return output
-    except
+            if not DASHBOARD_DATA.get("match_fut
