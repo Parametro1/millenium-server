@@ -1,74 +1,71 @@
-from http.server import SimpleHTTPRequestHandler
-from socketserver import TCPServer
-import os
-import time
-import requests
-import pandas as pd
-from threading import Thread
+# Pagina web sostitutiva leggera che non si interrompe
+            html = """<!DOCTYPE html>
+            <html>
+            <head><title>Millenium Terminal</title></style></head>
+            <body style="background:#010409; color:#c9d1d9; font-family:sans-serif; padding:20px;">
+                <h1>Millenium Bot — Status Active</h1>
+                <p>Il motore di scansione sta girando in background.</p>
+            </body>
+            </html>"""
+            self.wfile.write(html.encode("utf-8"))
+            return
 
-# --- PARTE NECESSARIA PER TENERE IL BOT ACCESO (NON TOCCARE) ---
-class KeepAlive(SimpleHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
+def invia_telegram(messaggio):
+    if TOKEN and CHAT_ID:
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+        try:
+            requests.post(url, json={"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "Markdown"})
+        except Exception as e:
+            print(f"Errore Telegram: {e}", flush=True)
 
-def start_server():
-    port = int(os.environ.get("PORT", 10000))
-    with TCPServer(("0.0.0.0", port), KeepAlive) as httpd:
-        httpd.serve_forever()
-
-Thread(target=start_server, daemon=True).start()
-# -------------------------------------------------------------
-
-# IL TUO VECCHIO CODICE ORIGINALE DA QUI IN POI:
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
-URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
-HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-
-DIZIONARIO_CAMPIONATI = {
-    "Calcio. Italia. Serie A": "I1", "Calcio. Italia. Serie B": "I2",
-    "Calcio. Inghilterra. Premier League": "E0", "Calcio. Inghilterra. Championship": "E1",
-    "Calcio. Spagna. Primera Division": "SP1", "Calcio. Spagna. Segunda Division": "SP2",
-    "Calcio. Germania. Bundesliga": "D1", "Calcio. Germania. 2. Bundesliga": "D2",
-    "Calcio. Francia. Ligue 1": "F1", "Calcio. Francia. Ligue 2": "F2",
-    "Calcio. Olanda. Eredivisie": "N1", "Calcio. Turchia. SuperLig": "T1", "Calcio. USA. MLS": "USA"
-}
-
-def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol_totali=0, is_live=False):
+def analizza_archivio_storico(nome_file_csv, casa_live, ospite_live):
     file_standard = f"{nome_file_csv}.csv"
     if os.path.exists(file_standard):
         try:
             df = pd.read_csv(file_standard)
             partite_casa = df[df['HomeTeam'].str.contains(casa_live, case=False, na=False)]
             partite_ospite = df[df['AwayTeam'].str.contains(ospite_live, case=False, na=False)]
-            media_casa = partite_casa['FTHG'].mean() if not partite_casa.empty else 0
-            media_fuori = partite_ospite['FTAG'].mean() if not partite_ospite.empty else 0
-            somma_medie = media_casa + media_fuori
-            if is_live and minuto:
-                if somma_medie >= 2.40:
-                    if minuto <= 35: return "💰 OVER 0.5 HT"
-                    elif minuto <= 65: return "💰 OVER LIVE"
-                    else: return "💰 OVER FINALE"
-            return f"Media: {somma_medie:.2f}"
-        except: return "Errore calcolo"
-    return "No file"
+            if not partite_casa.empty and not partite_ospite.empty:
+                media_casa = partite_casa['FTHG'].mean()
+                media_ospite = partite_ospite['FTAG'].mean()
+                return f"\n🏠 {casa_live} Media Gol: {media_casa:.2f}\n🚀 {ospite_live} Media Gol: {media_ospite:.2f}"
+        except: pass
+    return "\n⚠️ Dati storici non disponibili."
 
-def invia_telegram(messaggio):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    requests.post(url, json={"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "Markdown"})
-
-def scansione_live():
+def scansione_partite():
+    print("Scansione partite live in corso...", flush=True)
     try:
-        resp = requests.get(URL_LIVE, headers=HEADERS, timeout=10)
-        if resp.status_code == 200:
-            for partita in resp.json().get("Value", []):
-                # Qui gira la tua logica originale
-                pass
-    except: pass
+        response = session.get(URL_LIVE, timeout=10)
+        if response.status_code == 200:
+            partite = response.json().get("Value", [])
+            for partita in partite:
+                campionato_live = partita.get("LEAG", "")
+                squadra_casa = partita.get("O1", "")
+                squadra_ospite = partita.get("O2", "")
+                
+                if campionato_live in DIZIONARIO_CAMPIONATI:
+                    nome_file_csv = DIZIONARIO_CAMPIONATI[campionato_live]
+                    
+                    # Estrazione semplificata e sicura dei tiri
+                    stats = partita.get("SC", {}).get("S", [])
+                    tiri_totali_live = 0
+                    for s in stats:
+                        if s.get("Type") == 2: # ID standard tiri in porta
+                            tiri_totali_live = int(s.get("All1", 0)) + int(s.get("All2", 0))
+                    
+                    if tiri_totali_live >= 5:
+                        analisi = analizza_archivio_storico(nome_file_csv, squadra_casa, squadra_ospite)
+                        messaggio = f"⚽ *MILLENIUM BOT - VALUE BET*\n🏆 {campionato_live}\n⚔️ {squadra_casa} vs {squadra_ospite}\n🔥 Tiri in porta: {tiri_totali_live}{analisi}"
+                        invia_telegram(messaggio)
+                        print(f"Segnale inviato per {squadra_casa}", flush=True)
+                        time.sleep(2)
+    except Exception as e:
+        print(f"Errore screening: {e}", flush=True)
+
+# Avvio reale dei processi separati
+Thread(target=start_server, daemon=True).start()
+print("Millenium Bot avviato correttamente!", flush=True)
 
 while True:
-    scansione_live()
+    scansione_partite()
     time.sleep(60)
