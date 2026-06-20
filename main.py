@@ -46,24 +46,40 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
     except: return "Errore calcolo."
 
 # --- WEB SERVER PER RENDER ---
-def run_server():
-    with TCPServer(("", PORT), SimpleHTTPRequestHandler) as httpd:
-        print(f"Server attivo sulla porta {PORT}")
-        httpd.serve_forever()
+def avvia_server():
+    # Questa funzione fa partire il server web sulla porta richiesta da Render
+    from http.server import SimpleHTTPRequestHandler
+    from socketserver import TCPServer
+    import os
+    
+    class MyHandler(SimpleHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(b"<html><body><h1>Millenium Bot PRO Online</h1></body></html>")
+
+    porta = int(os.environ.get("PORT", 10000))
+    try:
+        with TCPServer(("", porta), MyHandler) as httpd:
+            print(f"Server web attivo sulla porta {porta}", flush=True)
+            httpd.serve_forever()
+    except Exception as e:
+        print(f"Errore nell'avvio del server: {e}", flush=True)
 
 # --- LOGICA PRINCIPALE ---
 if __name__ == "__main__":
-    # 1. Avviamo IMMEDIATAMENTE il server per fare felice Render usando il nome corretto
-    print("Avvio del server web sulla porta impostata...", flush=True)
-    Thread(target=run_server, daemon=True).start()
+    # 1. Avviamo il server web reale
+    print("Accensione del server web...", flush=True)
+    Thread(target=avvia_server, daemon=True).start()
     
-    # 2. Aspettiamo 5 secondi per dare il tempo a Render di agganciare la porta
+    # 2. Aspettiamo 5 secondi per far agganciare la porta a Render
     time.sleep(5) 
     
     print("Millenium Bot Pronto e Attivo!", flush=True)
-    invia_telegram("✅ Il motore Millenium è ripartito ed è stabilizzato su Render!")
+    invia_telegram("✅ Motore Millenium stabilizzato e Web Server ATTIVO!")
     
-    # 3. Ora il bot fa le scansioni vere ad ogni giro
+    # 3. Ciclo infinito delle scansioni
     while True:
         scansione_partite_live()
         scansione_prematch()
