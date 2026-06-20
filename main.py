@@ -52,15 +52,20 @@ def run_server():
         httpd.serve_forever()
 
 # --- LOGICA PRINCIPALE ---
+# --- LOGICA PRINCIPALE ---
 if __name__ == "__main__":
-    # Avvia il server web in un thread separato
-    server_thread = Thread(target=run_server)
-    server_thread.daemon = True
-    server_thread.start()
+    # 1. Avviamo IMMEDIATAMENTE il server per fare felice Render
+    print("Avvio del server web sulla porta impostata...", flush=True)
+    Thread(target=avvia_server, daemon=True).start()
     
-    print("Millenium Bot PRO avviato con successo!")
+    # 2. Aspettiamo 5 secondi per dare il tempo a Render di agganciare la porta
+    time.sleep(5) 
     
-    # Qui il tuo bot continua a girare
+    print("Millenium Bot Pronto e Attivo!", flush=True)
+    invia_telegram("✅ Il motore Millenium è ripartito ed è stabilizzato su Render!")
+    
+    # 3. Ora il bot fa le scansioni vere ad ogni giro
     while True:
-        # Inserisci qui la logica di scansione (quella che avevi prima)
+        scansione_partite_live()
+        scansione_prematch()
         time.sleep(60)
