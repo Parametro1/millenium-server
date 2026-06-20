@@ -5,30 +5,29 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 from threading import Thread
 
-# Recupera i dati da Render
+# Configurazione forzata
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-def invia_telegram(messaggio):
+def invia_messaggio_subito():
+    print("DEBUG: Provo a inviare messaggio...", flush=True)
     if TOKEN and CHAT_ID:
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         try:
-            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-            requests.post(url, json={"chat_id": CHAT_ID, "text": messaggio}, timeout=10)
+            r = requests.post(url, json={"chat_id": CHAT_ID, "text": "✅ Il bot è partito correttamente!"})
+            print(f"DEBUG TELEGRAM: Risposta {r.status_code} - {r.text}", flush=True)
         except Exception as e:
-            print(f"Errore Telegram: {e}", flush=True)
+            print(f"DEBUG ERRORE: {e}", flush=True)
+    else:
+        print("DEBUG ERRORE: TOKEN o CHAT_ID mancanti!", flush=True)
 
 def avvia_server():
     porta = int(os.environ.get("PORT", 10000))
     with TCPServer(("0.0.0.0", porta), SimpleHTTPRequestHandler) as server:
         server.serve_forever()
 
-def scansione():
-    # Invio di avvio
-    invia_telegram("✅ Il Bot è online!")
-    while True:
-        print("Il bot sta girando...", flush=True)
-        time.sleep(60)
-
 if __name__ == "__main__":
-    Thread(target=avvia_server, daemon=True).start()
-    scansione()
+    # Invio messaggio prima di tutto
+    invia_messaggio_subito()
+    # Poi avvio il server
+    avvia_server()
