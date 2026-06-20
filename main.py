@@ -47,7 +47,6 @@ def analizza_e_consiglia(nome_file_csv, casa_live, ospite_live, minuto=None, gol
 
 # --- WEB SERVER PER RENDER ---
 def avvia_server():
-    # Questa funzione fa partire il server web sulla porta richiesta da Render
     from http.server import SimpleHTTPRequestHandler
     from socketserver import TCPServer
     import os
@@ -69,11 +68,11 @@ def avvia_server():
 
 # --- LOGICA PRINCIPALE ---
 if __name__ == "__main__":
-    # 1. Avviamo il server web reale
+    # 1. Accendiamo il server web reale per Render
     print("Accensione del server web...", flush=True)
     Thread(target=avvia_server, daemon=True).start()
     
-    # 2. Aspettiamo 5 secondi per far agganciare la porta a Render
+    # 2. Aspettiamo che Render veda la porta aperta
     time.sleep(5) 
     
     print("Millenium Bot Pronto e Attivo!", flush=True)
