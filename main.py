@@ -58,7 +58,9 @@ DIZIONARIO_CAMPIONATI = {
     "Scozia. Championship": "SC1", "Grecia. Super League": "G1",
     "Austria. Bundesliga": "A1", "Svizzera. Super League": "SW1",
     "Danimarca. Superligaen": "DN1", "Norvegia. Eliteserien": "N1",
-    "Svezia. Allsvenskan": "S1", "USA. MLS": "USA"
+    "Svezia. Allsvenskan": "S1", "USA. MLS": "USA",
+    "Brasile. Serie A": "BRA", "Argentina. Primera Division": "ARG",
+    "Giappone. J1 League": "JPN", "Messico. Liga MX": "MEX"
 }
 
 def salva_dati_su_file():
