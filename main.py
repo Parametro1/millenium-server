@@ -52,11 +52,10 @@ def run_server():
         httpd.serve_forever()
 
 # --- LOGICA PRINCIPALE ---
-# --- LOGICA PRINCIPALE ---
 if __name__ == "__main__":
-    # 1. Avviamo IMMEDIATAMENTE il server per fare felice Render
+    # 1. Avviamo IMMEDIATAMENTE il server per fare felice Render usando il nome corretto
     print("Avvio del server web sulla porta impostata...", flush=True)
-    Thread(target=avvia_server, daemon=True).start()
+    Thread(target=run_server, daemon=True).start()
     
     # 2. Aspettiamo 5 secondi per dare il tempo a Render di agganciare la porta
     time.sleep(5) 
