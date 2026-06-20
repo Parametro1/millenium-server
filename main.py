@@ -68,17 +68,17 @@ def avvia_server():
 
 # --- LOGICA PRINCIPALE ---
 if __name__ == "__main__":
-    # 1. Accendiamo il server web reale per Render
-    print("Accensione del server web...", flush=True)
+    # 1. Avviamo IMMEDIATAMENTE il server web sulla porta impostata per fare felice Render
+    print("Avvio del server web sulla porta impostata...", flush=True)
     Thread(target=avvia_server, daemon=True).start()
     
-    # 2. Aspettiamo che Render veda la porta aperta
+    # 2. Aspettiamo 5 secondi per dare il tempo a Render di agganciare stabilmente la porta
     time.sleep(5) 
     
     print("Millenium Bot Pronto e Attivo!", flush=True)
-    invia_telegram("✅ Motore Millenium stabilizzato e Web Server ATTIVO!")
+    invia_telegram("✅ Il motore Millenium è stabilizzato e attivo su Render!")
     
-    # 3. Ciclo infinito delle scansioni
+    # 3. Solo ora facciamo partire il ciclo infinito di scansione delle partite
     while True:
         scansione_partite_live()
         scansione_prematch()
