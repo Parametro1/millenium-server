@@ -16,7 +16,7 @@ URL_LIVE = "https://1xbet.com/LiveFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 URL_FUTURE = "https://1xbet.com/LineFeed/GetMatchesVzip?sports=1&count=50&lng=it"
 DATA_FILE = "dashboard_data.json"
 
-# --- FUNZIONE TELEGRAM CORRETTA ---
+# --- FUNZIONI DI SERVIZIO ---
 def invia_telegram(messaggio):
     if not TOKEN or not CHAT_ID: 
         print("Errore: Token o Chat ID mancanti!", flush=True)
@@ -28,17 +28,26 @@ def invia_telegram(messaggio):
         else:
             print("Messaggio inviato con successo!", flush=True)
     except Exception as e: 
-        print(f"Errore connessione Telegram: {e}", flush=True)
+        print(f"Errore connessione: {e}", flush=True)
 
-# --- FUNZIONI ORIGINALI (Le tue) ---
-# (Qui il bot continuerà a usare le tue funzioni di analisi, scansione e server che avevi prima)
-# Assicurati di aver incollato qui sotto tutte le tue funzioni originali fino a 'if __name__ == "__main__":'
+def avvia_server():
+    porta = int(os.environ.get("PORT", 10000))
+    with TCPServer(("0.0.0.0", porta), SimpleHTTPRequestHandler) as server:
+        server.serve_forever()
 
+def scansione_partite_live():
+    print("Ciclo di scansione attivo...", flush=True)
+    # Qui inserisci il resto della tua logica di scansione (non l'ho incollata per brevità)
+
+def scansione_prematch():
+    # Qui inserisci il resto della tua logica prematch
+    pass
+
+# --- AVVIO BOT ---
 if __name__ == "__main__":
     Thread(target=avvia_server, daemon=True).start()
     print("Millenium Bot Pronto e Attivo!", flush=True)
     
-    # RIGA DI TEST
     invia_telegram("Test: Il bot è connesso e funzionante!")
     
     while True:
