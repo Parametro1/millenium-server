@@ -45,20 +45,20 @@ if os.path.exists(DATA_FILE):
         pass
 
 DIZIONARIO_CAMPIONATI = {
-    "Calcio. Inghilterra. Premier League": "E0", "Calcio. Inghilterra. Championship": "E1",
-    "Calcio. Inghilterra. League One": "E2", "Calcio. Inghilterra. League Two": "E3",
-    "Calcio. Inghilterra. National League": "EC", "Calcio. Germania. Bundesliga": "D1",
-    "Calcio. Germania. 2. Bundesliga": "D2", "Calcio. Germania. 3. Liga": "D3",
-    "Calcio. Italia. Serie A": "I1", "Calcio. Italia. Serie B": "I2",
-    "Calcio. Spagna. Primera Division": "SP1", "Calcio. Spagna. Segunda Division": "SP2",
-    "Calcio. Francia. Ligue 1": "F1", "Calcio. Francia. Ligue 2": "F2",
-    "Calcio. Olanda. Eredivisie": "N1", "Calcio. Olanda. Eerste Divisie": "N2",
-    "Calcio. Portogallo. Primeira Liga": "P1", "Calcio. Turchia. SuperLig": "T1",
-    "Calcio. Belgio. Pro League": "B1", "Calcio. Scozia. Premiership": "SC0",
-    "Calcio. Scozia. Championship": "SC1", "Calcio. Grecia. Super League": "G1",
-    "Calcio. Austria. Bundesliga": "A1", "Calcio. Svizzera. Super League": "SW1",
-    "Calcio. Danimarca. Superligaen": "DN1", "Calcio. Norvegia. Eliteserien": "N1",
-    "Calcio. Svezia. Allsvenskan": "S1", "Calcio. USA. MLS": "USA"
+    "Italia. Serie A": "I1", "Italia. Serie B": "I2",
+    "Inghilterra. Premier League": "E0", "Inghilterra. Championship": "E1",
+    "Inghilterra. League One": "E2", "Inghilterra. League Two": "E3",
+    "Inghilterra. National League": "EC", "Germania. Bundesliga": "D1",
+    "Germania. 2. Bundesliga": "D2", "Germania. 3. Liga": "D3",
+    "Spagna. Primera Division": "SP1", "Spagna. Segunda Division": "SP2",
+    "Francia. Ligue 1": "F1", "Francia. Ligue 2": "F2",
+    "Olanda. Eredivisie": "N1", "Olanda. Eerste Divisie": "N2",
+    "Portogallo. Primeira Liga": "P1", "Turchia. SuperLig": "T1",
+    "Belgio. Pro League": "B1", "Scozia. Premiership": "SC0",
+    "Scozia. Championship": "SC1", "Grecia. Super League": "G1",
+    "Austria. Bundesliga": "A1", "Svizzera. Super League": "SW1",
+    "Danimarca. Superligaen": "DN1", "Norvegia. Eliteserien": "N1",
+    "Svezia. Allsvenskan": "S1", "USA. MLS": "USA"
 }
 
 def salva_dati_su_file():
