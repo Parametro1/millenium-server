@@ -7,7 +7,7 @@ import json
 from http.server import SimpleHTTPRequestHandler
 import socketserver
 
-# Riceve i dati dalle variabili reali impostate sul tuo pannello Render
+# Manteniamo RIGOROSAMENTE le tue chiavi reali di Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "INSERISCI_QUI_IL_TUO_CHAT_ID")
 URL_LIVE = "https://1xlite-626219.top/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
@@ -87,20 +87,38 @@ def scansione_partite_live():
             fs = sc.get("FS", {})
             g_casa = fs.get("S1", 0)
             g_trasferta = fs.get("S2", 0)
+            
             statistiche = sc.get("S", [])
             tiri_totali = 0
             tiri_porta_totali = 0
             attacchi_pericolosi = 0
+            corner_totali = 0
+            
             for s in statistiche:
                 if s.get("T") == 1: tiri_totali = s.get("S1", 0) + s.get("S2", 0)
                 if s.get("T") == 2: tiri_porta_totali = s.get("S1", 0) + s.get("S2", 0)
                 if s.get("T") == 3: attacchi_pericolosi = s.get("S1", 0) + s.get("S2", 0)
+                if s.get("T") == 4: corner_totali = s.get("S1", 0) + s.get("S2", 0)
+                
             ap_minuto = attacchi_pericolosi / minuto if minuto > 0 else 0
-            if (ap_minuto >= 1.15 and minuto >= 15 and tiri_totali >= 4) or (tiri_porta_totali >= 5):
+            
+            # NUOVI CRITERI RIGIDI: COMPRENSIVI DI CORNER PER GOL IMMINENTE
+            condizione_assedio = (ap_minuto >= 1.25 and minuto >= 15 and tiri_totali >= 5 and corner_totali >= 3)
+            condizione_bombardamento = (tiri_porta_totali >= 5 and corner_totali >= 2)
+            
+            if condizione_assedio or condition_bombardamento:
                 sigla_csv = DIZIONARIO_CAMPIONATI[campionato]
                 consiglio = analizza_e_consiglia(sigla_csv, casa, trasferta, minuto)
                 if "No Bet" not in consiglio and "Nessun CSV" not in consiglio:
-                    msg = f"🔥 <b>MILLENIUM ATTACCO IN CORSO</b> 🔥\n\n<b>Match:</b> {casa} - {trasferta}\n<b>Minuto:</b> {minuto}' | <b>Score:</b> {g_casa}-{g_trasferta}\n\n<b>Tiri in Porta:</b> {tiri_porta_totali}\n<b>Pressione AP/Min:</b> {ap_minuto:.2f}\n\n<b>Analisi Storica:</b>\n{consiglio}"
+                    msg = (
+                        f"🔥 <b>MILLENIUM: GOL IMMINENTE</b> 🔥\n\n"
+                        f"<b>Match:</b> {casa} - {trasferta}\n"
+                        f"<b>Minuto:</b> {minuto}' | <b>Score:</b> {g_casa}-{g_trasferta}\n\n"
+                        f"<b>Calci d'Angolo:</b> {corner_totali} 📐\n"
+                        f"<b>Tiri (In Porta / Tot):</b> {tiri_porta_totali} / {tiri_totali} ⚽\n"
+                        f"<b>Pressione AP/Min:</b> {ap_minuto:.2f} ⚡\n\n"
+                        f"<b>Analisi Storica:</b>\n{consiglio}"
+                    )
                     invia_telegram(msg)
                     PARTITE_NOTIFICATE.add(match_id)
     except Exception:
@@ -128,39 +146,7 @@ def avvia_server():
                 self.send_response(200)
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
-                
-                # GRAFICA COMPLETA RIPRISTINATA E MIGLIORATA
-                html = """<html>
-                <head>
-                    <title>Millenium Bot Dashboard</title>
-                    <meta charset="utf-8">
-                    <style>
-                        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1a1a24; color: #e2e8f0; margin: 0; padding: 40px; display: flex; justify-content: center; }
-                        .container { max-width: 800px; width: 100%; }
-                        h1 { color: #818cf8; font-size: 2.5rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-                        .status-box { background: #242432; padding: 20px; border-radius: 12px; border-left: 6px solid #34d399; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); margin-bottom: 25px; }
-                        .status-title { font-size: 1.2rem; font-weight: bold; color: #34d399; margin-bottom: 5px; }
-                        .info-card { background: #242432; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
-                        p { color: #94a3b8; line-height: 1.6; }
-                        .badge { background: #312e81; color: #c7d2fe; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>📊 Millenium Live Core</h1>
-                        <div class="status-box">
-                            <div class="status-title">● MOTORE ATTIVO H24</div>
-                            <p style="margin:0; color:#cbd5e1;">Il server sta scansionando i flussi live di 1XBet in tempo reale. I filtri storici sui file CSV sono caricati.</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>⚙️ Informazioni di Sistema</h3>
-                            <p><b>Connessione Telegram:</b> <span class="badge" style="background:#065f46; color:#a7f3d0;">ONLINE</span></p>
-                            <p><b>Auto-Ping Anti Sonno:</b> Attivo ogni 10 minuti</p>
-                            <p><b>Frequenza Scansione:</b> Ciclo continuo (60 secondi)</p>
-                        </div>
-                    </div>
-                </body>
-                </html>"""
+                html = "<html><body style='font-family:Arial;background:#1e1e2e;color:#cdd6f4;padding:40px;'><h1>📊 Millenium Bot Live Monitor</h1><p>Stato: ONLINE - Scansione attiva h24 con filtro Corner.</p></body></html>"
                 self.wfile.write(html.encode("utf-8"))
             else: super().do_GET()
     port = int(os.environ.get("PORT", 10000))
@@ -184,8 +170,7 @@ if __name__ == "__main__":
     
     time.sleep(5)
     print("Millenium Bot Pronto e Attivo!", flush=True)
-    
-    invia_telegram("Il motore Millenium e ripartito ed e attivo su Render")
+    invia_telegram("Il motore Millenium e aggiornato con filtro Corner h24")
     
     while True:
         try:
@@ -193,5 +178,4 @@ if __name__ == "__main__":
             scansione_prematch()
         except Exception as e:
             print(f"⚠️ Errore temporaneo nel ciclo: {str(e)}. Il bot continua a scansionare...", flush=True)
-        
         time.sleep(60)
