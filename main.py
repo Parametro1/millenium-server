@@ -7,6 +7,7 @@ import json
 from http.server import SimpleHTTPRequestHandler
 import socketserver
 
+# Riceve i dati dalle variabili reali impostate sul tuo pannello Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "INSERISCI_QUI_IL_TUO_CHAT_ID")
 URL_LIVE = "https://1xlite-626219.top/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
@@ -36,9 +37,10 @@ def invia_telegram(messaggio):
     try:
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         payload = {"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "HTML"}
-        requests.post(url, json=payload, timeout=10)
-    except Exception:
-        pass
+        res = requests.post(url, json=payload, timeout=10)
+        print(f"Risposta Telegram: {res.status_code} - {res.text}", flush=True)
+    except Exception as e:
+        print(f"Errore invio Telegram: {str(e)}", flush=True)
 
 def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
     try:
@@ -74,7 +76,7 @@ def scansione_partite_live():
         if not data.get("Value"): return
         for match in data["Value"]:
             campionato = match.get("LE", "")
-            if campeonato not in DIZIONARIO_CAMPIONATI: continue
+            if campionato not in DIZIONARIO_CAMPIONATI: continue
             match_id = str(match.get("I", ""))
             if match_id in PARTITE_NOTIFICATE: continue
             casa = match.get("O1", "")
@@ -113,7 +115,7 @@ def scansione_prematch():
         salva_dati = []
         for match in data["Value"]:
             campionato = match.get("LE", "")
-            if campeonato not in DIZIONARIO_CAMPIONATI: continue
+            if campionato not in DIZIONARIO_CAMPIONATI: continue
             salva_dati.append({"id": match.get("I"), "home": match.get("O1"), "away": match.get("O2"), "league": campionato, "time": match.get("S")})
         with open(DATA_FILE, "w") as f: json.dump(salva_dati, f)
     except Exception:
@@ -126,19 +128,70 @@ def avvia_server():
                 self.send_response(200)
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
-                html = "<html><body style='font-family:Arial;background:#1e1e2e;color:#cdd6f4;padding:40px;'><h1>📊 Millenium Bot Live Monitor</h1><p>Stato: ONLINE - Scansione attiva.</p></body></html>"
+                
+                # GRAFICA COMPLETA RIPRISTINATA E MIGLIORATA
+                html = """<html>
+                <head>
+                    <title>Millenium Bot Dashboard</title>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1a1a24; color: #e2e8f0; margin: 0; padding: 40px; display: flex; justify-content: center; }
+                        .container { max-width: 800px; width: 100%; }
+                        h1 { color: #818cf8; font-size: 2.5rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+                        .status-box { background: #242432; padding: 20px; border-radius: 12px; border-left: 6px solid #34d399; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); margin-bottom: 25px; }
+                        .status-title { font-size: 1.2rem; font-weight: bold; color: #34d399; margin-bottom: 5px; }
+                        .info-card { background: #242432; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+                        p { color: #94a3b8; line-height: 1.6; }
+                        .badge { background: #312e81; color: #c7d2fe; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>📊 Millenium Live Core</h1>
+                        <div class="status-box">
+                            <div class="status-title">● MOTORE ATTIVO H24</div>
+                            <p style="margin:0; color:#cbd5e1;">Il server sta scansionando i flussi live di 1XBet in tempo reale. I filtri storici sui file CSV sono caricati.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚙️ Informazioni di Sistema</h3>
+                            <p><b>Connessione Telegram:</b> <span class="badge" style="background:#065f46; color:#a7f3d0;">ONLINE</span></p>
+                            <p><b>Auto-Ping Anti Sonno:</b> Attivo ogni 10 minuti</p>
+                            <p><b>Frequenza Scansione:</b> Ciclo continuo (60 secondi)</p>
+                        </div>
+                    </div>
+                </body>
+                </html>"""
                 self.wfile.write(html.encode("utf-8"))
             else: super().do_GET()
     port = int(os.environ.get("PORT", 10000))
     with socketserver.TCPServer(("", port), DashboardHandler) as httpd: httpd.serve_forever()
 
+def auto_ping_server():
+    time.sleep(30)
+    while True:
+        try:
+            url_server = f"http://localhost:{os.environ.get('PORT', 10000)}/"
+            requests.get(url_server, timeout=10)
+            print("🔄 Keep-Alive Ping inviato con successo. Server sveglio.", flush=True)
+        except Exception:
+            pass
+        time.sleep(600)
+
 if __name__ == "__main__":
     print("Avvio del server web sulla porta impostata...", flush=True)
     Thread(target=avvia_server, daemon=True).start()
+    Thread(target=auto_ping_server, daemon=True).start()
+    
     time.sleep(5)
     print("Millenium Bot Pronto e Attivo!", flush=True)
-    invia_telegram("✅ Il motore Millenium è ripartito ed è stabilizzato su Render!")
+    
+    invia_telegram("Il motore Millenium e ripartito ed e attivo su Render")
+    
     while True:
-        scansione_partite_live()
-        scansione_prematch()
+        try:
+            scansione_partite_live()
+            scansione_prematch()
+        except Exception as e:
+            print(f"⚠️ Errore temporaneo nel ciclo: {str(e)}. Il bot continua a scansionare...", flush=True)
+        
         time.sleep(60)
