@@ -102,11 +102,11 @@ def scansione_partite_live():
                 
             ap_minuto = attacchi_pericolosi / minuto if minuto > 0 else 0
             
-            # NUOVI CRITERI RIGIDI: COMPRENSIVI DI CORNER PER GOL IMMINENTE
+            # Algoritmo avanzato con controllo dei Corner
             condizione_assedio = (ap_minuto >= 1.25 and minuto >= 15 and tiri_totali >= 5 and corner_totali >= 3)
             condizione_bombardamento = (tiri_porta_totali >= 5 and corner_totali >= 2)
             
-            if condizione_assedio or condition_bombardamento:
+            if condizione_assedio or condizione_bombardamento:
                 sigla_csv = DIZIONARIO_CAMPIONATI[campionato]
                 consiglio = analizza_e_consiglia(sigla_csv, casa, trasferta, minuto)
                 if "No Bet" not in consiglio and "Nessun CSV" not in consiglio:
@@ -146,7 +146,39 @@ def avvia_server():
                 self.send_response(200)
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
-                html = "<html><body style='font-family:Arial;background:#1e1e2e;color:#cdd6f4;padding:40px;'><h1>📊 Millenium Bot Live Monitor</h1><p>Stato: ONLINE - Scansione attiva h24 con filtro Corner.</p></body></html>"
+                
+                # GRAFICA PROFESSIONALE RIPRISTINATA
+                html = """<html>
+                <head>
+                    <title>Millenium Bot Dashboard</title>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1a1a24; color: #e2e8f0; margin: 0; padding: 40px; display: flex; justify-content: center; }
+                        .container { max-width: 800px; width: 100%; }
+                        h1 { color: #818cf8; font-size: 2.5rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+                        .status-box { background: #242432; padding: 20px; border-radius: 12px; border-left: 6px solid #34d399; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); margin-bottom: 25px; }
+                        .status-title { font-size: 1.2rem; font-weight: bold; color: #34d399; margin-bottom: 5px; }
+                        .info-card { background: #242432; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+                        p { color: #94a3b8; line-height: 1.6; }
+                        .badge { background: #065f46; color: #a7f3d0; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>📊 Millenium Live Core</h1>
+                        <div class="status-box">
+                            <div class="status-title">● MOTORE ATTIVO H24</div>
+                            <p style="margin:0; color:#cbd5e1;">Il server sta scansionando i flussi live di 1XBet in tempo reale. Algoritmo avanzato con filtro Corner attivo.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚙️ Informazioni di Sistema</h3>
+                            <p><b>Connessione Telegram:</b> <span class="badge">ONLINE</span></p>
+                            <p><b>Auto-Ping Anti Sonno:</b> Attivo ogni 10 minuti</p>
+                            <p><b>Frequenza Scansione:</b> Ciclo continuo (60 secondi)</p>
+                        </div>
+                    </div>
+                </body>
+                </html>"""
                 self.wfile.write(html.encode("utf-8"))
             else: super().do_GET()
     port = int(os.environ.get("PORT", 10000))
