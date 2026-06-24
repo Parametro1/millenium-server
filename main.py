@@ -118,7 +118,7 @@ def scansione_partite_live():
             "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
         }
         res = requests.get(URL_LIVE, headers=headers, timeout=15)
-        if res.status_code != 200: 
+        if res.status_code not in [200, 203]: 
             print(f"⚠️ Server risponde con status {res.status_code}", flush=True)
             return
         data = res.json()
