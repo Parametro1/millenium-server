@@ -35,7 +35,6 @@ DIZIONARIO_CAMPIONATI = {
 PARTITE_NOTIFICATE = set()
 
 def normalizza_nome(nome):
-    """ Rende il nome minuscolo e pulisce spazi, trattini e caratteri speciali per un confronto flessibile """
     if not isinstance(nome, str): return ""
     nome = nome.lower()
     nome = re.sub(r'[-–_]', ' ', nome)
@@ -43,7 +42,6 @@ def normalizza_nome(nome):
     return " ".join(nome.split())
 
 def match_squadre(nome_live, nome_csv):
-    """ Ritorna True se un nome è contenuto nell'altro o viceversa (es. 'AIK Stockholm' e 'AIK' combaceranno) """
     n_live = normalizza_nome(nome_live)
     n_csv = normalizza_nome(nome_csv)
     return (n_live in n_csv) or (n_csv in n_live)
@@ -69,13 +67,11 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
         df = pd.read_csv(nome_file)
         df.columns = df.columns.str.strip()
         
-        # Mappatura flessibile per i nomi delle colonne (gestisce sia HomeTeam/AwayTeam che Home/Away)
         col_home = 'Home' if 'Home' in df.columns else 'HomeTeam'
         col_away = 'Away' if 'Away' in df.columns else 'AwayTeam'
         col_hg = 'HG' if 'HG' in df.columns else 'FTHG'
         col_ag = 'AG' if 'AG' in df.columns else 'FTAG'
         
-        # Trova la corrispondenza dei nomi nel database CSV tramite confronto flessibile
         casa_csv = None
         trasferta_csv = None
         
@@ -92,7 +88,6 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
             print(f"⚠️ [Mancata Corrispondenza Nomi] Live: {casa} - {trasferta} | CSV Trovati: Casa={casa_csv}, Fuori={trasferta_csv}", flush=True)
             return "Dati storici insufficienti. | No Bet"
             
-        # Filtra usando i nomi corretti recuperati dal CSV
         df_filtrato = df[((df[col_home] == casa_csv) & (df[col_away] == trasferta_csv)) | (df[col_home] == casa_csv) | (df[col_away] == trasferta_csv)]
         if df_filtrato.empty: return "Dati storici insufficienti. | No Bet"
         
@@ -126,8 +121,10 @@ def scansione_partite_live():
             if campionato not in DIZIONARIO_CAMPIONATI: continue
             match_id = str(match.get("I", ""))
             if match_id in PARTITE_NOTIFICATE: continue
+            
             casa = match.get("O1E", match.get("O1", ""))
-trasferta = match.get("O2E", match.get("O2", ""))
+            trasferta = match.get("O2E", match.get("O2", ""))
+            
             sc = match.get("SC", {})
             ts = sc.get("TS", 0)
             minuto = ts // 60
@@ -149,11 +146,10 @@ trasferta = match.get("O2E", match.get("O2", ""))
                 
             ap_minuto = attacchi_pericolosi / minuto if minuto > 0 else 0
             
-            # Algoritmo avanzato con controllo dei Corner
             condizione_assedio = (ap_minuto >= 1.25 and minuto >= 15 and tiri_totali >= 5 and corner_totali >= 3)
             condizione_bombardamento = (tiri_porta_totali >= 5 and corner_totali >= 2)
             
-            if condizione_assedio or condizione_bombardamento:
+            if condizione_assedio or condición_bombardamento:
                 sigla_csv = DIZIONARIO_CAMPIONATI[campionato]
                 consiglio = analizza_e_consiglia(sigla_csv, casa, trasferta, minuto)
                 if "No Bet" not in consiglio and "Nessun CSV" not in consiglio:
