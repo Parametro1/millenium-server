@@ -11,8 +11,8 @@ import re
 # Manteniamo RIGOROSAMENTE le tue chiavi reali di Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "INSERISCI_QUI_IL_TUO_CHAT_ID")
-URL_LIVE = "https://1xapi.link/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
-URL_FUTURE = "https://1xapi.link/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_LIVE = "https://1xapi.link/LiveFeed/GetMatchesLineZip?sports=1&count=50&lng=it&mode=4"
+URL_FUTURE = "https://1xapi.link/LineFeed/GetMatchesLineZip?sports=1&count=50&lng=it&mode=4"
 DATA_FILE = "dati_partite.json"
 
 DIZIONARIO_CAMPIONATI = {
@@ -126,8 +126,8 @@ def scansione_partite_live():
             if campionato not in DIZIONARIO_CAMPIONATI: continue
             match_id = str(match.get("I", ""))
             if match_id in PARTITE_NOTIFICATE: continue
-            casa = match.get("O1", "")
-            trasferta = match.get("O2", "")
+            casa = match.get("O1E", match.get("O1", ""))
+trasferta = match.get("O2E", match.get("O2", ""))
             sc = match.get("SC", {})
             ts = sc.get("TS", 0)
             minuto = ts // 60
