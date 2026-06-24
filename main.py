@@ -11,8 +11,8 @@ import re
 # Manteniamo RIGOROSAMENTE le tue chiavi reali di Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "INSERISCI_QUI_IL_TUO_CHAT_ID")
-URL_LIVE = "https://1xstable-api.com/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
-URL_FUTURE = "https://1xstable-api.com/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_LIVE = "https://1xbat.com/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_FUTURE = "https://1xbat.com/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
 DATA_FILE = "dati_partite.json"
 
 DIZIONARIO_CAMPIONATI = {
