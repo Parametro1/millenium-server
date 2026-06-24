@@ -114,12 +114,12 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
     except Exception as e:
         return f"Errore Analisi: {str(e)}"
 
-def scansione_partite_live():
+        def scansione_partite_live():
     global PARTITE_NOTIFICATE
     try:
+        print("🔄 Avvio scansione partite live da Bet365...", flush=True)
         res = requests.get(URL_BET365_LIVE, timeout=15)
         if res.status_code != 200: return
-        
         data = res.json()
         if not data or "games" not in data: return
         
