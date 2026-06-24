@@ -11,8 +11,8 @@ import re
 # Manteniamo RIGOROSAMENTE le tue chiavi reali di Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "INSERISCI_QUI_IL_TUO_CHAT_ID")
-URL_LIVE = "https://1xbat.com/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
-URL_FUTURE = "https://1xbat.com/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_LIVE = "https://1xclick.club/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_FUTURE = "https://1xclick.club/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
 DATA_FILE = "dati_partite.json"
 
 DIZIONARIO_CAMPIONATI = {
@@ -107,14 +107,20 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
         return f"{info_medie} | No Bet"
     except Exception as e:
         print(f"❌ Errore critico in analizza_e_consiglia: {str(e)}", flush=True)
-        return f"Errore analisi: {str(e)}"
+        return f"ErroreDoc: {str(e)}"
 
 def scansione_partite_live():
     global PARTITE_NOTIFICATE
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
+        }
         res = requests.get(URL_LIVE, headers=headers, timeout=15)
-        if res.status_code != 200: return
+        if res.status_code != 200: 
+            print(f"⚠️ Server risponde con status {res.status_code}", flush=True)
+            return
         data = res.json()
         if not data.get("Value"): return
         for match in data["Value"]:
@@ -170,7 +176,10 @@ def scansione_partite_live():
 
 def scansione_prematch():
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*"
+        }
         res = requests.get(URL_FUTURE, headers=headers, timeout=15)
         if res.status_code != 200: return
         data = res.json()
