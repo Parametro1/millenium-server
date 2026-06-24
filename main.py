@@ -112,7 +112,8 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
 def scansione_partite_live():
     global PARTITE_NOTIFICATE
     try:
-        res = requests.get(URL_LIVE, timeout=15)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        res = requests.get(URL_LIVE, headers=headers, timeout=15)
         if res.status_code != 200: return
         data = res.json()
         if not data.get("Value"): return
@@ -149,7 +150,7 @@ def scansione_partite_live():
             condizione_assedio = (ap_minuto >= 1.25 and minuto >= 15 and tiri_totali >= 5 and corner_totali >= 3)
             condizione_bombardamento = (tiri_porta_totali >= 5 and corner_totali >= 2)
             
-            if condizione_assedio or condición_bombardamento:
+            if condizione_assedio or condizione_bombardamento:
                 sigla_csv = DIZIONARIO_CAMPIONATI[campionato]
                 consiglio = analizza_e_consiglia(sigla_csv, casa, trasferta, minuto)
                 if "No Bet" not in consiglio and "Nessun CSV" not in consiglio:
@@ -169,7 +170,8 @@ def scansione_partite_live():
 
 def scansione_prematch():
     try:
-        res = requests.get(URL_FUTURE, timeout=15)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        res = requests.get(URL_FUTURE, headers=headers, timeout=15)
         if res.status_code != 200: return
         data = res.json()
         if not data.get("Value"): return
