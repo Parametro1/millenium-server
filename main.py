@@ -39,7 +39,6 @@ PARTITE_NOTIFICATE = set()
 def normalizza_nome(nome):
     if not isinstance(nome, str): return ""
     nome = nome.lower()
-    # Rimuove suffissi comuni per ottimizzare il match con i CSV
     rimuovere = ["fc", "cf", "ud", "ac", "ssc", "rc", "as", "sv", "fk", "cd", "atletico", "club"]
     for parola in rimuovere:
         nome = re.sub(r'\b' + parola + r'\b', '', nome)
@@ -114,12 +113,13 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
     except Exception as e:
         return f"Errore Analisi: {str(e)}"
 
-        def scansione_partite_live():
+def scansione_partite_live():
     global PARTITE_NOTIFICATE
     try:
         print("🔄 Avvio scansione partite live da Bet365...", flush=True)
         res = requests.get(URL_BET365_LIVE, timeout=15)
         if res.status_code != 200: return
+        
         data = res.json()
         if not data or "games" not in data: return
         
@@ -134,11 +134,9 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
             trasferta = game.get("away_team", "")
             minuto = int(game.get("minute", 0))
             
-            # Punteggio corrente
             g_casa = int(game.get("home_score", 0))
             g_trasferta = int(game.get("away_score", 0))
             
-            # Statistiche Live Bet365
             stats = game.get("stats", {})
             tiri_porta_totali = int(stats.get("on_target_home", 0)) + int(stats.get("on_target_away", 0))
             tiri_fuori_totali = int(stats.get("off_target_home", 0)) + int(stats.get("off_target_away", 0))
@@ -149,7 +147,6 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
             
             ap_minuto = attacchi_pericolosi / minuto if minuto > 0 else 0
             
-            # Applicazione algoritmi Millenium
             condizione_assedio = (ap_minuto >= 1.25 and minuto >= 15 and tiri_totali >= 5 and corner_totali >= 3)
             condizione_bombardamento = (tiri_porta_totali >= 5 and corner_totali >= 2)
             
