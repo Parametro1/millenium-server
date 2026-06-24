@@ -6,6 +6,7 @@ from threading import Thread
 import json
 from http.server import SimpleHTTPRequestHandler
 import socketserver
+import re
 
 # Manteniamo RIGOROSAMENTE le tue chiavi reali di Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
@@ -33,6 +34,20 @@ DIZIONARIO_CAMPIONATI = {
 
 PARTITE_NOTIFICATE = set()
 
+def normalizza_nome(nome):
+    """ Rende il nome minuscolo e pulisce spazi, trattini e caratteri speciali per un confronto flessibile """
+    if not isinstance(nome, str): return ""
+    nome = nome.lower()
+    nome = re.sub(r'[-–_]', ' ', nome)
+    nome = re.sub(r'[áàâãä]', 'a', nome).replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+    return " ".join(nome.split())
+
+def match_squadre(nome_live, nome_csv):
+    """ Ritorna True se un nome è contenuto nell'altro o viceversa (es. 'AIK Stockholm' e 'AIK' combaceranno) """
+    n_live = normalizza_nome(nome_live)
+    n_csv = normalizza_nome(nome_csv)
+    return (n_live in n_csv) or (n_csv in n_live)
+
 def invia_telegram(messaggio):
     try:
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -47,17 +62,48 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
         file_standard = f"{nome_file_csv}.csv"
         file_maiuscolo = f"{nome_file_csv}.CSV"
         nome_file = file_standard if os.path.exists(file_standard) else file_maiuscolo
-        if not os.path.exists(nome_file): return "Nessun CSV trovato."
+        if not os.path.exists(nome_file): 
+            print(f"⚠️ CSV Non Trovato per la sigla: {nome_file_csv}", flush=True)
+            return "Nessun CSV trovato."
+            
         df = pd.read_csv(nome_file)
         df.columns = df.columns.str.strip()
-        df_filtrato = df[((df['HomeTeam'] == casa) & (df['AwayTeam'] == trasferta)) | (df['HomeTeam'] == casa) | (df['AwayTeam'] == trasferta)]
+        
+        # Mappatura flessibile per i nomi delle colonne (gestisce sia HomeTeam/AwayTeam che Home/Away)
+        col_home = 'Home' if 'Home' in df.columns else 'HomeTeam'
+        col_away = 'Away' if 'Away' in df.columns else 'AwayTeam'
+        col_hg = 'HG' if 'HG' in df.columns else 'FTHG'
+        col_ag = 'AG' if 'AG' in df.columns else 'FTAG'
+        
+        # Trova la corrispondenza dei nomi nel database CSV tramite confronto flessibile
+        casa_csv = None
+        trasferta_csv = None
+        
+        for squad_csv in df[col_home].unique():
+            if match_squadre(casa, squad_csv):
+                casa_csv = squad_csv
+                break
+        for squad_csv in df[col_away].unique():
+            if match_squadre(trasferta, squad_csv):
+                trasferta_csv = squad_csv
+                break
+                
+        if not casa_csv or not trasferta_csv:
+            print(f"⚠️ [Mancata Corrispondenza Nomi] Live: {casa} - {trasferta} | CSV Trovati: Casa={casa_csv}, Fuori={trasferta_csv}", flush=True)
+            return "Dati storici insufficienti. | No Bet"
+            
+        # Filtra usando i nomi corretti recuperati dal CSV
+        df_filtrato = df[((df[col_home] == casa_csv) & (df[col_away] == trasferta_csv)) | (df[col_home] == casa_csv) | (df[col_away] == trasferta_csv)]
         if df_filtrato.empty: return "Dati storici insufficienti. | No Bet"
-        media_gol = (df_filtrato['FTHG'].mean() + df_filtrato['FTAG'].mean())
-        media_casa = df_filtrato[df_filtrato['HomeTeam'] == casa]['FTHG'].mean()
-        media_trasferta = df_filtrato[df_filtrato['AwayTeam'] == trasferta]['FTAG'].mean()
+        
+        media_gol = (df_filtrato[col_hg].mean() + df_filtrato[col_ag].mean())
+        media_casa = df_filtrato[df_filtrato[col_home] == casa_csv][col_hg].mean()
+        media_trasferta = df_filtrato[df_filtrato[col_away] == trasferta_csv][col_ag].mean()
+        
         if pd.isna(media_casa): media_casa = 0.0
         if pd.isna(media_trasferta): media_trasferta = 0.0
         if pd.isna(media_gol): media_gol = 0.0
+        
         info_medie = f"Media: {media_gol:.2f} (C:{media_casa:.1f} F:{media_trasferta:.1f})"
         if media_gol >= 2.40:
             if minuto <= 35: return f"{info_medie} | OVER 0.5 HT"
@@ -65,6 +111,7 @@ def analizza_e_consiglia(nome_file_csv, casa, trasferta, minuto):
             elif 66 <= minuto <= 82: return f"{info_medie} | OVER 0.5 FINALE"
         return f"{info_medie} | No Bet"
     except Exception as e:
+        print(f"❌ Errore critico in analizza_e_consiglia: {str(e)}", flush=True)
         return f"Errore analisi: {str(e)}"
 
 def scansione_partite_live():
@@ -121,8 +168,8 @@ def scansione_partite_live():
                     )
                     invia_telegram(msg)
                     PARTITE_NOTIFICATE.add(match_id)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"❌ Errore in scansione_partite_live: {str(e)}", flush=True)
 
 def scansione_prematch():
     try:
@@ -147,7 +194,6 @@ def avvia_server():
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
                 
-                # GRAFICA PROFESSIONALE RIPRISTINATA
                 html = """<html>
                 <head>
                     <title>Millenium Bot Dashboard</title>
@@ -201,8 +247,8 @@ if __name__ == "__main__":
     Thread(target=auto_ping_server, daemon=True).start()
     
     time.sleep(5)
-    print("Millenium Bot Pronto e Attivo!", flush=True)
-    invia_telegram("Il motore Millenium e aggiornato con filtro Corner h24")
+    print("Millenium Bot Pronto e Attivo con Normalizzazione Nomi e Colonne!", flush=True)
+    invia_telegram("Il motore Millenium e aggiornato con filtro Corner h24 e Auto-Normalizzazione!")
     
     while True:
         try:
