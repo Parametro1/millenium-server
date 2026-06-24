@@ -11,8 +11,8 @@ import re
 # Manteniamo RIGOROSAMENTE le tue chiavi reali di Render
 TOKEN = os.getenv("TELEGRAM_TOKEN", "INSERISCI_QUI_IL_TUO_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "INSERISCI_QUI_IL_TUO_CHAT_ID")
-URL_LIVE = "https://1xbet.com/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
-URL_FUTURE = "https://1xbet.com/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_LIVE = "https://1xclick.club/LiveFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
+URL_FUTURE = "https://1xclick.club/LineFeed/GetMatches30?sports=1&count=50&lng=it&cfv=0"
 DATA_FILE = "dati_partite.json"
 
 DIZIONARIO_CAMPIONATI = {
@@ -49,7 +49,7 @@ def match_squadre(nome_live, nome_csv):
 def invia_telegram(messaggio):
     try:
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-        payload = {"chat_id": CHAT_ID, "text": messaggio, "parse_mode": "HTML"}
+        payload = {"chat_id": CHAT_ID, "text": mensaje, "parse_mode": "HTML"}
         res = requests.post(url, json=payload, timeout=10)
         print(f"Risposta Telegram: {res.status_code} - {res.text}", flush=True)
     except Exception as e:
@@ -113,14 +113,21 @@ def scansione_partite_live():
     global PARTITE_NOTIFICATE
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
+            "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
         }
         res = requests.get(URL_LIVE, headers=headers, timeout=15)
         if res.status_code not in [200, 203]: 
             print(f"⚠️ Server risponde con status {res.status_code}", flush=True)
             return
+            
+        if not res.text or res.text.strip().startswith("<"):
+            print("⚠️ Risposta ricevuta in formato HTML o vuota (Filtro anti-bot attivo sul link).", flush=True)
+            return
+
         data = res.json()
         if not data.get("Value"): return
         for match in data["Value"]:
@@ -177,11 +184,12 @@ def scansione_partite_live():
 def scansione_prematch():
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*"
         }
         res = requests.get(URL_FUTURE, headers=headers, timeout=15)
-        if res.status_code != 200: return
+        if res.status_code not in [200, 203]: return
+        if not res.text or res.text.strip().startswith("<"): return
         data = res.json()
         if not data.get("Value"): return
         salva_dati = []
@@ -255,7 +263,7 @@ if __name__ == "__main__":
     
     time.sleep(5)
     print("Millenium Bot Pronto e Attivo con Normalizzazione Nomi e Colonne!", flush=True)
-    invia_telegram("Il motore Millenium e aggiornato con filtro Corner h24 e Auto-Normalizzazione!")
+    invia_telegram("Il motore Millenium è aggiornato con filtro Corner h24 e Auto-Normalizzazione!")
     
     while True:
         try:
