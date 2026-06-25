@@ -1,0 +1,29 @@
+import pandas as pd
+
+# 1. Carica il file saltando la prima riga di "sballo" per impostare i veri header
+df = pd.read_csv("Ast.csv.csv", header=1)
+
+# 2. Rinomina le colonne nel formato standard atteso dal bot
+mappa_colonne = {
+    "Date": "Date",
+    "Home Team": "HomeTeam",
+    "Away Team": "AwayTeam",
+    "Home Goals": "FTHG",
+    "Away Goals": "FTAG",
+}
+
+df = df.rename(columns=mappa_colonne)
+
+# 3. Mantieni solo le colonne utili al bot per evitare file pesanti
+colonne_utili = ["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG"]
+# Prendiamo solo le colonne presenti per evitare errori
+colonne_da_salvare = [col for col in colonne_utili if col in df.columns]
+df_pulito = df[colonne_da_salvare].copy()
+
+# 4. Pulisci i dati (rimuove righe totalmente vuote)
+df_pulito = df_pulito.dropna(subset=["HomeTeam", "AwayTeam"])
+
+# 5. Salva il nuovo file pronto per l'uso
+df_pulito.to_csv("ast_pulito.csv", index=False)
+
+print("✨ File 'ast_pulito.csv' creato con successo e pronto per il bot!")
