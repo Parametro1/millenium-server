@@ -147,7 +147,7 @@ def scansione_partite_live():
             
             ap_minuto = attacchi_pericolosi / minuto if minuto > 0 else 0
             
-            condizione_assedio = (ap_minuto >= 1.25 and minuto >= 15 and tiri_totali >= 5 and corner_totali >= 3)
+           condizione_assedio = (ap_minuto >= 0.50 and minuto >= 10 and tiri_totali >= 3 and corner_totali >= 2)
             condizione_bombardamento = (tiri_porta_totali >= 5 and corner_totali >= 2)
             
             if condizione_assedio or condizione_bombardamento:
