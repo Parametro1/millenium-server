@@ -108,4 +108,36 @@ def elabora_match_live(match):
                     f"🏆 <b>Campionato:</b> {campionato}\n"
                     f"⏱️ <b>Minuto:</b> {minuto}' | <b>Score:</b> {g_casa}-{g_trasferta}\n"
                     f"⚡ <b>Stato:</b> {tipo_allarme}\n\n"
-                    f"📊 <b>
+                    f"📊 <b>Dati Live:</b>\n"
+                    f"• Calci d'Angolo: {corner_totali}\n"
+                    f"• Tiri Totali: {tiri_totali} (In Porta: {tiri_porta_totali})\n"
+                    f"• AP/Minuto: {round(attacchi_pericolosi_al_minuto, 2)}\n\n"
+                    f"📚 <b>Analisi Archivio:</b>\n<i>{consiglio}</i>"
+                )
+                invia_telegram(msg)
+                print(f"🚀 Segnale inviato per {casa} - {trasferta}")
+                
+    except Exception as e:
+        print(f"Errore elaborazione match live: {e}")
+
+# =====================================================================
+# 🔄 LOOP INFINITO REALE PER RENDER
+# =====================================================================
+if __name__ == "__main__":
+    print("🤖 MILLENIUM BOT ATTIVO IN BACKGROUND...")
+    
+    while True:
+        try:
+            print("🔄 Avvio scansione partite live da Bet365...")
+            
+            # (Qui l'integrazione con il tuo sistema reale per scaricare i match)
+            # esempio: 
+            # elenco_partite = scarica_live()
+            # for match in elenco_partite:
+            #     elabora_match_live(match)
+            
+            time.sleep(60) 
+            
+        except Exception as e:
+            print(f"Errore nel ciclo continuo: {e}")
+            time.sleep(10)
