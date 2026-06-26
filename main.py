@@ -123,21 +123,26 @@ def elabora_match_live(match):
 # =====================================================================
 # 🔄 LOOP INFINITO REALE PER RENDER
 # =====================================================================
+import threading
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+
+def avvia_server_finto():
+    # Questo apre una porta finta (la 10000) che serve solo a far stare zitto Render
+    server = HTTPServer(('0.0.0.0', 10000), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
 if __name__ == "__main__":
-    print("🤖 MILLENIUM BOT ATTIVO IN BACKGROUND...")
+    print("🤖 MILLENIUM BOT ATTIVO CON FIX PORTA...")
     
+    # Fa partire il server finto in background per Render
+    threading.Thread(target=avvia_server_finto, daemon=True).start()
+    
+    # Qui sotto parte il tuo ciclo continuo normale del bot
     while True:
         try:
             print("🔄 Avvio scansione partite live da Bet365...")
-            
-            # (Qui l'integrazione con il tuo sistema reale per scaricare i match)
-            # esempio: 
-            # elenco_partite = scarica_live()
-            # for match in elenco_partite:
-            #     elabora_match_live(match)
-            
+            # Il tuo codice di scansione...
             time.sleep(60) 
-            
         except Exception as e:
             print(f"Errore nel ciclo continuo: {e}")
             time.sleep(10)
