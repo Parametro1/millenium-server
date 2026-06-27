@@ -1,12 +1,10 @@
 import os
 import time
+import json
 from threading import Thread
-import requests
-import urllib3
+import urllib.request
+import urllib.parse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
-
-# Disabilita avvisi SSL per connessioni non verificate
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ==========================================
 # 1. VARIABILI D'AMBIENTE & CONFIGURAZIONE DIZIONARIO
@@ -32,10 +30,9 @@ CAMPIONATI_DIZIONARIO = {
 }
 
 # ==========================================
-# 2. FIX PORTA PER RENDER (SENZA FLASK)
+# 2. FIX PORTA PER RENDER NATIVO
 # ==========================================
 def avvia_server_finto():
-    """Apre la porta richiesta da Render usando i moduli nativi di Python"""
     try:
         server = HTTPServer(('0.0.0.0', PORT), SimpleHTTPRequestHandler)
         server.serve_forever()
@@ -53,8 +50,11 @@ def invia_telegram(messaggio):
         "parse_mode": "HTML"
     }
     try:
-        requests.post(url, json=payload, timeout=10)
-        print("[TELEGRAM] Segnale inviato con successo!")
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'}, method='POST')
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                print("[TELEGRAM] Segnale inviato con successo!")
     except Exception as e:
         print(f"[TELEGRAM ERRORE] Impossibile inviare messaggio: {e}")
 
@@ -66,14 +66,13 @@ def calcola_media_csv(file_csv, squadra_casa, squadra_trasferta):
     if not os.path.exists(path_file):
         return 0.0, 0.0, 0.0
     
-    # Logica mock originale
     media_casa = 1.35
     media_trasferta = 1.20
     media_combinata = media_casa + media_trasferta
     return media_combinata, media_casa, media_trasferta
 
 # ==========================================
-# 5. ALGORITMO DI ATTIVAZIONE ED ELABORAZIONE LIVE
+# 5. ALGORITMO DI ATTIVAZIONE LIVE
 # ==========================================
 def analizza_partita(match_data):
     try:
@@ -98,10 +97,8 @@ def analizza_partita(match_data):
         tiri_totali = match_data.get("tiri_totali", 0)
         corner = match_data.get("corner", 0)
         
-        # Calcolo AP/Minuto
         ap_minuto = round(ap / minuto, 2) if minuto > 0 else 0
         
-        # 🎯 SOGLIE AGGIORNATE CON ALLINEAMENTO PERFETTO
         trigger_a = (ap_minuto >= 0.50 and minuto >= 10 and tiri_totali >= 3 and corner >= 2)
         trigger_b = (tiri_porta >= 5 and corner >= 2)
         
@@ -112,6 +109,7 @@ def analizza_partita(match_data):
                 print(f"[FILTRO] {squadra_casa} - {squadra_trasferta} scartata per Media Storica insufficiente ({media_totale})")
                 return
             
+            # --- BLOCCO TEMPORALE CORRETTO E ALLINEATO ---
             if 0 <= minuto <= 35:
                 consiglio = "OVER 0.5 HT"
             elif 36 <= minuto <= 65:
@@ -119,3 +117,68 @@ def analizza_partita(match_data):
             elif 66 <= minuto <= 82:
                 consiglio = "OVER 0.5 FINALE"
             else:
+                return  # Ignora se fuori minutaggio corretto
+            
+            tipo_allarme = "🎯 BOMBARDAMENTO" if trigger_b else "🔥 ASSEDIO"
+            
+            segnali_testo = (
+                f"🔥 <b>MILLENIUM: GOL IMMINENTE</b> 🔥\n\n"
+                f"<b>Match:</b> {squadra_casa} - {squadra_trasferta}\n"
+                f"<b>Stato:</b> {tipo_allarme}\n"
+                f"<b>Minuto:</b> {minuto}' | <b>Score:</b> {gol_casa}-{gol_trasferta}\n\n"
+                f"Calci d'Angolo: {corner} 📐\n"
+                f"Tiri (In Porta / Tot): {tiri_porta} / {tiri_totali} ⚽\n"
+                f"Pressione AP/Min: {ap_minuto} ⚡\n\n"
+                f"<b>Analisi Storica:</b>\n"
+                f"Media: {media_totale:.2f} (C:{med_c:.2f} F:{med_t:.2f}) | 🚨 <b>{consiglio}</b>"
+            )
+            
+            invia_telegram(segnali_testo)
+            PARTITE_NOTIFICATE.add(match_id)
+            
+    except Exception as e:
+        print(f"[ERRORE ANALISI MATCH] Errore nel calcolo dei parametri: {e}")
+
+# ==========================================
+# 6. LOOP DI SCANSIONE CONTINUO H24
+# ==========================================
+def motore_scansione_live():
+    print("[CORE] Motore di scansione avviato e attivo.")
+    while True:
+        try:
+            mock_payload_partite = [
+                {
+                    "id": "12345",
+                    "campionato": "Calcio. Svezia. Allsvenskan",
+                    "casa": "Malmo FF",
+                    "trasferta": "AIK",
+                    "minuto": 28,
+                    "gol_casa": 0,
+                    "gol_trasferta": 0,
+                    "attacchi_pericolosi": 15,
+                    "tiri_totali": 4,
+                    "tiri_in_porta": 1,
+                    "corner": 3
+                }
+            ]
+            
+            for partita in mock_payload_partite:
+                analizza_partita(partita)
+                
+        except Exception as e:
+            print(f"[CORE WARNING] Errore nel ciclo di scansione principale: {e}.")
+            
+        time.sleep(60)
+
+# ==========================================
+# AVVIO DEL SISTEMA
+# ==========================================
+if __name__ == "__main__":
+    if not os.path.exists("database"):
+        os.makedirs("database")
+
+    print("🤖 MILLENIUM BOT IN COSTRUZIONE...")
+    Thread(target=avvia_server_finto, daemon=True).start()
+    print(f"[SISTEMA] Fix porta abilitato sulla porta {PORT}")
+    
+    motore_scansione_live()
