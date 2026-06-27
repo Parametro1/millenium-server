@@ -8,8 +8,8 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 # ==========================================
 # VARIABILI D'AMBIENTE
 # ==========================================
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "IL_TUO_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "IL_TUO_CHAT_ID")
+TELEGRAM_TOKEN = ("8561552292:AAFc2FArZKz4jzjM-NKDyFa7TS1bxNqIURE")
+TELEGRAM_CHAT_ID = ("-6449164924")
 PORT = int(os.getenv("PORT", 10000))
 
 PARTITE_NOTIFICATE = set()
