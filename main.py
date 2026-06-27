@@ -6,10 +6,10 @@ import requests
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 # ==========================================
-# VARIABILI D'AMBIENTE
+# ⚙️ CONFIGURAZIONE PARAMETRI E CREDENZIALI
 # ==========================================
-TELEGRAM_TOKEN = ("8561552292:AAFc2FArZKz4jzjM-NKDyFa7TS1bxNqIURE")
-TELEGRAM_CHAT_ID = ("-6449164924")
+TELEGRAM_TOKEN = "8561552292:AAFc2FArZKz4jzjM-NKdyFa7TS1bxNqIURE"
+TELEGRAM_CHAT_ID = "6449164924"
 PORT = int(os.getenv("PORT", 10000))
 
 PARTITE_NOTIFICATE = set()
@@ -28,14 +28,9 @@ CAMPIONATI_DIZIONARIO = {
     "Calcio. Irlanda. Premier Division": "IRL1",
 }
 
-# Server leggero nativo per non far spegnere Render
-def avvia_server_finto():
-    try:
-        server = HTTPServer(('0.0.0.0', PORT), SimpleHTTPRequestHandler)
-        server.serve_forever()
-    except Exception:
-        pass
-
+# ==========================================
+# 📡 FUNZIONE INVIO TELEGRAM (BLINDATA)
+# ==========================================
 def invia_telegram(messaggio):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": messaggio, "parse_mode": "HTML"}
@@ -43,15 +38,27 @@ def invia_telegram(messaggio):
         response = requests.post(url, json=payload, timeout=10)
         if response.status_code == 200:
             print("[TELEGRAM] Segnale inviato con successo!")
+        else:
+            print(f"[TELEGRAM API ERRORE] Status: {response.status_code} - {response.text}")
     except Exception as e:
-        print(f"[TELEGRAM ERRORE]: {e}")
+        print(f"[TELEGRAM CRASH PROTETTO]: {e}")
 
+# ==========================================
+# 🖥️ SERVER WEB NATIVO (ANTI-SPEGNIMENTO RENDER)
+# ==========================================
+def avvia_server_finto():
+    try:
+        server = HTTPServer(('0.0.0.0', PORT), SimpleHTTPRequestHandler)
+        server.serve_forever()
+    except Exception:
+        pass
+
+# ==========================================
+# 📊 ALGORITMO DI ANALISI (PARAMETRI ABBASSATI)
+# ==========================================
 def calcola_media_csv(file_csv, squadra_casa, squadra_trasferta):
     return 2.55, 1.35, 1.20
 
-# ==========================================
-# ALGORITMO CON PARAMETRI ABBASSATI
-# ==========================================
 def analizza_partita(match_data):
     try:
         nome_campionato = match_data.get("campionato")
@@ -77,7 +84,7 @@ def analizza_partita(match_data):
         
         ap_minuto = round(ap / minuto, 2) if minuto > 0 else 0
         
-        # SOGLIE ABBASSATE RICHIESTE
+        # 🔍 SOGLIE MODIFICATE RICHIESTE
         trigger_a = (ap_minuto >= 0.40 and minuto >= 10 and tiri_totali >= 2 and corner >= 1)
         trigger_b = (tiri_porta >= 3 and corner >= 1)
         
@@ -116,22 +123,39 @@ def analizza_partita(match_data):
         print(f"[ERRORE ANALISI MATCH] Errore: {e}")
 
 # ==========================================
-# SCANSIONE PROTETTA
+# 🔄 MOTORE DI SCANSIONE LIVE
 # ==========================================
 def motore_scansione_live():
     print("[CORE] Scansione attiva e pronta.")
     while True:
         try:
+            # Spazio pronto per agganciare l'URL o lo scraping dei dati reali in futuro
             pass
         except Exception as e:
-            print(f"[CORE WARNING] Errore: {e}")
+            print(f"[CORE WARNING] Errore ciclo: {e}")
         time.sleep(60)
 
+# ==========================================
+# 🚀 AVVIO APPLICAZIONE
+# ==========================================
 if __name__ == "__main__":
     if not os.path.exists("database"):
         os.makedirs("database")
 
     print("🤖 MILLENIUM BOT IN COSTRUZIONE...")
-    # FIX: Ora chiama correttamente il server finto nativo
+    
+    # Avvia il server web per Render in background
     Thread(target=avvia_server_finto, daemon=True).start()
+    
+    # Invia la spia di controllo all'avvio
+    messaggio_avvio = (
+        "🤖 <b>MOTORE MILLENIUM ONLINE</b> 🤖\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "⚡ <i>Aggiornamento codice completato con successo.</i>\n"
+        "📊 Parametri di scansione abbassati e attivi.\n"
+        "🟢 Status: <b>LIVE</b>"
+    )
+    invia_telegram(messaggio_avvio)
+    
+    # Fissa il bot nel ciclo continuo di scansione
     motore_scansione_live()
