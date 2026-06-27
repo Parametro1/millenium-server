@@ -9,7 +9,7 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 # ⚙️ CONFIGURAZIONE PARAMETRI E CREDENZIALI
 # ==========================================
 TELEGRAM_TOKEN = "8561552292:AAFc2FArZKz4jzjM-NKdyFa7TS1bxNqIURE"
-TELEGRAM_CHAT_ID = "6449164924"
+TELEGRAM_CHAT_ID = "@canale_millenium_test_123"  # <-- Sostituisci con il link del tuo canale pubblico
 PORT = int(os.getenv("PORT", 10000))
 
 PARTITE_NOTIFICATE = set()
