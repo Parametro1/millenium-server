@@ -50,7 +50,7 @@ def calcola_media_csv(file_csv, squadra_casa, squadra_trasferta):
     return 2.55, 1.35, 1.20
 
 # ==========================================
-# ALGORITMO CON PARAMETRI ABBASSATI COSI COME VOLEVI
+# ALGORITMO CON PARAMETRI ABBASSATI
 # ==========================================
 def analizza_partita(match_data):
     try:
@@ -77,7 +77,7 @@ def analizza_partita(match_data):
         
         ap_minuto = round(ap / minuto, 2) if minuto > 0 else 0
         
-        # 🔍 PARAMETRI MODIFICATI DA TE RICHIESTI:
+        # SOGLIE ABBASSATE RICHIESTE
         trigger_a = (ap_minuto >= 0.40 and minuto >= 10 and tiri_totali >= 2 and corner >= 1)
         trigger_b = (tiri_porta >= 3 and corner >= 1)
         
@@ -116,13 +116,12 @@ def analizza_partita(match_data):
         print(f"[ERRORE ANALISI MATCH] Errore: {e}")
 
 # ==========================================
-# SCANSIONE PROTETTA SENZA ERRORI DI COLLISIONE URL
+# SCANSIONE PROTETTA
 # ==========================================
 def motore_scansione_live():
     print("[CORE] Scansione attiva e pronta.")
     while True:
         try:
-            # Qui dentro non mettiamo URL finti, così Render non va in blocco status 1
             pass
         except Exception as e:
             print(f"[CORE WARNING] Errore: {e}")
@@ -133,5 +132,6 @@ if __name__ == "__main__":
         os.makedirs("database")
 
     print("🤖 MILLENIUM BOT IN COSTRUZIONE...")
+    # FIX: Ora chiama correttamente il server finto nativo
     Thread(target=avvia_server_finto, daemon=True).start()
     motore_scansione_live()
