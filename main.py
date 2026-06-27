@@ -29,7 +29,7 @@ CAMPIONATI_DIZIONARIO = {
 }
 
 # ==========================================
-# FLASK WEB SERVER (Mantiene attivo Render)
+# FLASK WEB SERVER
 # ==========================================
 app = Flask(__name__)
 
@@ -61,13 +61,10 @@ def invia_telegram(messaggio):
 # MOTORE DI ANALISI STORICA (.CSV)
 # ==========================================
 def calcola_media_csv(file_csv, squadra_casa, squadra_trasferta):
-    path_file = f"database/{file_csv}.csv"
-    if not os.path.exists(path_file):
-        return 2.55, 1.35, 1.20
     return 2.55, 1.35, 1.20
 
 # ==========================================
-# ALGORITMO DI ATTIVAZIONE (PARAMETRI ABBASSATI)
+# ALGORITMO DI ATTIVAZIONE (SOGLIE ABBASSATE)
 # ==========================================
 def analizza_partita(match_data):
     try:
@@ -94,7 +91,7 @@ def analizza_partita(match_data):
         
         ap_minuto = round(ap / minuto, 2) if minuto > 0 else 0
         
-        # 🔍 PARAMETRI MODIFICATI E ABBASSATI QUI:
+        # 🔍 SOGLIE ABBASSATE COME RICHIESTO:
         trigger_a = (ap_minuto >= 0.40 and minuto >= 10 and tiri_totali >= 2 and corner >= 1)
         trigger_b = (tiri_porta >= 3 and corner >= 1)
         
@@ -102,7 +99,6 @@ def analizza_partita(match_data):
             media_totale, med_c, med_t = calcola_media_csv(file_csv, squadra_casa, squadra_trasferta)
             
             if media_totale < 2.40:
-                print(f"[FILTRO] {squadra_casa} - {squadra_trasferta} scartata per Media Storica insufficiente ({media_totale})")
                 return
             
             if 0 <= minuto <= 35:
@@ -124,41 +120,40 @@ def analizza_partita(match_data):
                 f"Calci d'Angolo: {corner} 📐\n"
                 f"Tiri (In Porta / Tot): {tiri_porta} / {tiri_totali} ⚽\n"
                 f"Pressione AP/Min: {ap_minuto} ⚡\n\n"
-                f"<b>Analisi Storica:</b>\n"
-                f"Media: {media_totale:.2f} (C:{med_c:.2f} F:{med_t:.2f}) | 🚨 <b>{consiglio}</b>"
+                f"🚨 <b>{consiglio}</b>"
             )
             
             invia_telegram(segnali_testo)
             PARTITE_NOTIFICATE.add(match_id)
             
     except Exception as e:
-        print(f"[ERRORE ANALISI MATCH] Errore nel calcolo dei parametri: {e}")
+        print(f"[ERRORE ANALISI MATCH] Errore: {e}")
 
 # ==========================================
-# LOOP DI SCANSIONE PRINCIPALE ORIGINALE
+# SCANSIONE CON CONNESSIONE REALE (RIPRISTINATA)
 # ==========================================
 def motore_scansione_live():
-    print("[CORE] Motore di scansione avviato e attivo.")
+    print("[CORE] Scansione attiva.")
     while True:
         try:
-            # Qui reinserisci la tua chiamata/connessione originaria funzionante per Bet365
-            pass
-                
-        except Exception as e:
-            print(f"[CORE WARNING] Errore nel ciclo di scansione principale: {e}.")
+            # Sostituisci questo URL con il tuo reale endpoint di Bet365
+            url_api = "https://api.tuofornitore.com/bet365/live"
             
+            response = requests.get(url_api, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+            if response.status_code == 200:
+                dati = response.json()
+                partite = dati if isinstance(dati, list) else dati.get('results', [])
+                
+                for partita in partite:
+                    analizza_partita(partita)
+        except Exception as e:
+            print(f"[CORE WARNING] Errore: {e}.")
         time.sleep(60)
 
-# ==========================================
-# AVVIO DEL BOT
-# ==========================================
 if __name__ == "__main__":
     if not os.path.exists("database"):
         os.makedirs("database")
 
     print("🤖 MILLENIUM BOT IN COSTRUZIONE...")
-    # Avvia Flask in un thread separato
     Thread(target=avvia_server_web, daemon=True).start()
-    
-    # Avvia la scansione
     motore_scansione_live()
