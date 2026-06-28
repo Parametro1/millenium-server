@@ -1,161 +1,155 @@
 import os
+import csv
 import time
-import json
-from threading import Thread
 import requests
-from http.server import SimpleHTTPRequestHandler, HTTPServer
+import numpy as np
+from scipy.stats import poisson
 
-# ==========================================
-# ⚙️ CONFIGURAZIONE PARAMETRI E CREDENZIALI
-# ==========================================
-TELEGRAM_TOKEN = "8561552292:AAFc2FArZKz4jzjM-NKdyFa7TS1bxNqIURE"
-TELEGRAM_CHAT_ID = "@canale_millenium_test_123"  # <-- Sostituisci con il link del tuo canale pubblico
-PORT = int(os.getenv("PORT", 10000))
+# =====================================================================
+# CONFIGURAZIONE COMPLETA (API E CSV)
+# =====================================================================
+MIA_API_KEY = "6ecd40bd18c885456522ea6cd79d195a"
+URL_THE_ODDS_API = "https://api.the-odds-api.com/v4/sports/soccer/odds/" 
 
-PARTITE_NOTIFICATE = set()
+# Render manterrà il tuo file D1 (1).csv nella stessa cartella senza toccarlo
+CSV_FILE_NAME = "D1 (1).csv"  
 
-CAMPIONATI_DIZIONARIO = {
-    "Calcio. Italia. Serie A": "I1",
-    "Calcio. Inghilterra. Premier League": "E0",
-    "Calcio. Spagna. Primera Division": "SP1",
-    "Calcio. Germania. Bundesliga": "D1",
-    "Calcio. Brasile. Campeonato Brasileiro Serie A": "BRA1",
-    "Calcio. Argentina. Primera Division": "ARG1",
-    "Calcio. Giappone. J-League": "JPN1",
-    "Calcio. Svezia. Allsvenskan": "SWE1",
-    "Calcio. Norvegia. Eliteserien": "NOR1",
-    "Calcio. Finlandia. Veikkausliiga": "FIN1",
-    "Calcio. Irlanda. Premier Division": "IRL1",
-}
+class SistemaTipsterProAI:
+    def __init__(self):
+        self.team_stats = {}
+        self.league_avg_goals = 1.45  
 
-# ==========================================
-# 📡 FUNZIONE INVIO TELEGRAM (BLINDATA)
-# ==========================================
-def invia_telegram(messaggio):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": messaggio, "parse_mode": "HTML"}
-    try:
-        response = requests.post(url, json=payload, timeout=10)
-        if response.status_code == 200:
-            print("[TELEGRAM] Segnale inviato con successo!")
-        else:
-            print(f"[TELEGRAM API ERRORE] Status: {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"[TELEGRAM CRASH PROTETTO]: {e}")
-
-# ==========================================
-# 🖥️ SERVER WEB NATIVO (ANTI-SPEGNIMENTO RENDER)
-# ==========================================
-def avvia_server_finto():
-    try:
-        server = HTTPServer(('0.0.0.0', PORT), SimpleHTTPRequestHandler)
-        server.serve_forever()
-    except Exception:
-        pass
-
-# ==========================================
-# 📊 ALGORITMO DI ANALISI (PARAMETRI ABBASSATI)
-# ==========================================
-def calcola_media_csv(file_csv, squadra_casa, squadra_trasferta):
-    return 2.55, 1.35, 1.20
-
-def analizza_partita(match_data):
-    try:
-        nome_campionato = match_data.get("campionato")
-        if nome_campionato not in CAMPIONATI_DIZIONARIO:
-            return
-        
-        file_csv = CAMPIONATI_DIZIONARIO[nome_campionato]
-        squadra_casa = match_data.get("casa")
-        squadra_trasferta = match_data.get("trasferta")
-        match_id = match_data.get("id")
-        
-        if match_id in PARTITE_NOTIFICATE:
-            return
-
-        minuto = match_data.get("minuto", 0)
-        gol_casa = match_data.get("gol_casa", 0)
-        gol_trasferta = match_data.get("gol_trasferta", 0)
-        
-        ap = match_data.get("attacchi_pericolosi", 0)
-        tiri_porta = match_data.get("tiri_in_porta", 0)
-        tiri_totali = match_data.get("tiri_totali", 0)
-        corner = match_data.get("corner", 0)
-        
-        ap_minuto = round(ap / minuto, 2) if minuto > 0 else 0
-        
-        # 🔍 SOGLIE MODIFICATE RICHIESTE
-        trigger_a = (ap_minuto >= 0.40 and minuto >= 10 and tiri_totali >= 2 and corner >= 1)
-        trigger_b = (tiri_porta >= 3 and corner >= 1)
-        
-        if trigger_a or trigger_b:
-            media_totale, med_c, med_t = calcola_media_csv(file_csv, squadra_casa, squadra_trasferta)
+    def carica_archivio_csv(self, percorso_file):
+        """Legge direttamente il tuo file D1 (1).csv ed estrae i parametri delle squadre"""
+        if not os.path.exists(percorso_file):
+            print(f"⚠️ Archivio CSV '{percorso_file}' non trovato nei file di Render!")
+            return False
             
-            if media_totale < 2.40:
-                return
-            
-            if 0 <= minuto <= 35:
-                consiglio = "OVER 0.5 HT"
-            elif 36 <= minuto <= 65:
-                consiglio = "OVER LIVE"
-            elif 66 <= minuto <= 82:
-                consiglio = "OVER 0.5 FINALE"
-            else:
-                return
-            
-            tipo_allarme = "🎯 BOMBARDAMENTO" if trigger_b else "🔥 ASSEDIO"
-            
-            segnali_testo = (
-                f"🔥 <b>MILLENIUM: GOL IMMINENTE</b> 🔥\n\n"
-                f"<b>Match:</b> {squadra_casa} - {squadra_trasferta}\n"
-                f"<b>Stato:</b> {tipo_allarme}\n"
-                f"<b>Minuto:</b> {minuto}' | <b>Score:</b> {gol_casa}-{gol_trasferta}\n\n"
-                f"Calci d'Angolo: {corner} 📐\n"
-                f"Tiri (In Porta / Tot): {tiri_porta} / {tiri_totali} ⚽\n"
-                f"Pressione AP/Min: {ap_minuto} ⚡\n\n"
-                f"🚨 <b>{consiglio}</b>"
-            )
-            
-            invia_telegram(segnali_testo)
-            PARTITE_NOTIFICATE.add(match_id)
-            
-    except Exception as e:
-        print(f"[ERRORE ANALISI MATCH] Errore: {e}")
-
-# ==========================================
-# 🔄 MOTORE DI SCANSIONE LIVE
-# ==========================================
-def motore_scansione_live():
-    print("[CORE] Scansione attiva e pronta.")
-    while True:
         try:
-            # Spazio pronto per agganciare l'URL o lo scraping dei dati reali in futuro
-            pass
+            # Calcoliamo prima le medie del campionato dal tuo file reale
+            gol_casa_tot, gol_trasf_tot, match_tot = 0, 0, 0
+            with open(percorso_file, mode='r', encoding='utf-8') as f:
+                lettore = csv.DictReader(f)
+                righe = list(lettore)
+                for riga in righe:
+                    if riga.get('FTHG') and riga.get('FTAG'):
+                        gol_casa_tot += float(riga['FTHG'])
+                        gol_trasf_tot += float(riga['FTAG'])
+                        match_tot += 1
+            
+            media_campionato_gol = (gol_casa_tot + gol_trasf_tot) / (match_tot * 2) if match_tot > 0 else 1.45
+            self.league_avg_goals = media_campionato_gol
+
+            # Mappiamo i dati delle squadre dal tuo storico
+            squadre_data = {}
+            for riga in righe:
+                if not riga.get('HomeTeam'): continue
+                hc, ac = riga['HomeTeam'].strip(), riga['AwayTeam'].strip()
+                fthg, ftag = float(riga['FTHG']), float(riga['FTAG'])
+                
+                if hc not in squadre_data: squadre_data[hc] = {'gf_c': [], 'gs_c': [], 'gf_t': [], 'gs_t': []}
+                if ac not in squadre_data: squadre_data[ac] = {'gf_c': [], 'gs_c': [], 'gf_t': [], 'gs_t': []}
+                
+                squadre_data[hc]['gf_c'].append(fthg)
+                squadre_data[hc]['gs_c'].append(ftag)
+                squadre_data[ac]['gf_t'].append(ftag)
+                squadre_data[ac]['gs_t'].append(fthg)
+
+            for sq, d in squadre_data.items():
+                self.team_stats[sq] = {
+                    'att_casa': np.mean(d['gf_c']) / media_campionato_gol if d['gf_c'] else 1.0,
+                    'def_casa': np.mean(d['gs_c']) / media_campionato_gol if d['gs_c'] else 1.0,
+                    'att_trasferta': np.mean(d['gf_t']) / media_campionato_gol if d['gf_t'] else 1.0,
+                    'def_trasferta': np.mean(d['gs_t']) / media_campionato_gol if d['gs_t'] else 1.0
+                }
+            print(f"✅ Archivio storico '{percorso_file}' elaborato: {len(self.team_stats)} squadre pronte.")
+            return True
         except Exception as e:
-            print(f"[CORE WARNING] Errore ciclo: {e}")
-        time.sleep(60)
+            print(f"❌ Errore elaborazione CSV: {e}")
+            return False
 
-# ==========================================
-# 🚀 AVVIO APPLICAZIONE
-# ==========================================
+    def analizza_match_live_odds(self, casa, trasferta, minuto=0):
+        sq_c = self.team_stats.get(casa, {'att_casa': 1.0, 'def_casa': 1.0, 'att_trasferta': 1.0, 'def_trasferta': 1.0})
+        sq_t = self.team_stats.get(trasferta, {'att_casa': 1.0, 'def_casa': 1.0, 'att_trasferta': 1.0, 'def_trasferta': 1.0})
+        
+        lambda_base = sq_c['att_casa'] * sq_t['def_trasferta'] * self.league_avg_goals
+        mu_base = sq_t['att_trasferta'] * sq_c['def_casa'] * self.league_avg_goals
+        
+        frazione_tempo = max(0, 90 - minuto) / 90.0
+        lambda_residuo = lambda_base * frazione_tempo
+        mu_residuo = mu_base * frazione_tempo
+        
+        prob_1 = 0.0
+        for i in range(6):
+            for j in range(6):
+                p_cella = poisson.pmf(i, lambda_residuo) * poisson.pmf(j, mu_residuo)
+                if i > j: prob_1 += p_cella
+                    
+        return {"1": round(1 / prob_1, 2) if prob_1 > 0.01 else 99.0}
+
+    def calcola_dropping_odds_e_filtra(self, quota_apertura, quota_attuale):
+        delta_q = (quota_attuale - quota_apertura) / quota_apertura
+        return round(delta_q * 100, 2), delta_q < -0.08
+
+    def calcola_kelly_frazionario(self, prob_reale, quota_bookmaker):
+        b = quota_bookmaker - 1
+        kelly_puro = (prob_reale * b - (1 - prob_reale)) / b
+        return round(max(0.0, kelly_puro * 0.25) * 100, 2)
+
+    def validazione_ordine_hedge_fund(self, quota_reale, quota_apertura, quota_attuale, bankroll_totale):
+        prob_reale = 1 / quota_reale
+        delta_p, mercato_bruciato = self.calcola_dropping_odds_e_filtra(quota_apertura, quota_attuale)
+        
+        if mercato_bruciato or quota_attuale <= quota_reale:
+            return {"Stato": "REJECTED"}
+        
+        stake_p = self.calcola_kelly_frazionario(prob_reale, quota_attuale)
+        capitale = round((stake_p / 100) * bankroll_totale, 2)
+        
+        if stake_p > 0:
+            return {"Stato": "APPROVED", "Delta Q": f"{delta_p}%", "Quota AI": quota_reale, "Quota Banco": quota_attuale, "Stake": f"{stake_p}%", "Capitale": f"{capitale}€"}
+        return {"Stato": "REJECTED"}
+
+# =====================================================================
+# MOTORE DI SCANSIONE OPERATIVO
+# =====================================================================
+def esegui_scansione_fondi(bankroll=10000):
+    ai_system = SistemaTipsterProAI()
+    if not ai_system.carica_archivio_csv(CSV_FILE_NAME): return
+    
+    params = {'apiKey': MIA_API_KEY, 'regions': 'eu', 'markets': 'h2h', 'oddsFormat': 'decimal'}
+    
+    print("\n🔄 Connessione a The Odds API...")
+    try:
+        risposta = requests.get(URL_THE_ODDS_API, params=params, timeout=12)
+        if risposta.status_code == 200:
+            partite = risposta.json()
+            print(f"📊 Scansione in corso su {len(partite)} match totali...")
+            for match in partite:
+                casa, trasferta = match['home_team'], match['away_team']
+                
+                if match.get('bookmakers'):
+                    primo_bkr = match['bookmakers'][0]
+                    nome_bkr = primo_bkr['title']
+                    market_h2h = primo_bkr['markets'][0]['outcomes']
+                    
+                    quota_bkr_1 = 1.0
+                    for outcome in market_h2h:
+                        if outcome['name'] == casa: quota_bkr_1 = outcome['price']
+                    
+                    quote_reali_ai = ai_system.analizza_match_live_odds(casa, trasferta, minuto=0)
+                    quota_equa_1 = quote_reali_ai["1"]
+                    quota_apertura_ipotetica = quota_bkr_1 + 0.12
+                    
+                    decisione = ai_system.validazione_ordine_hedge_fund(quota_equa_1, quota_apertura_ipotetica, quota_bkr_1, bankroll)
+                    
+                    if decisione['Stato'] == "APPROVED":
+                        print(f"\n🔥 [SEGNALE APPROVATO] -> {casa} vs {trasferta} ({nome_bkr})")
+                        print(f"   Quota AI: {decisione['Quota AI']} | Quota Banco: {decisione['Quota Banco']} | Delta: {decisione['Delta Q']}")
+                        print(f"   💰 Investimento consigliato Kelly: {decisione['Capitale']} ({decisione['Stake']})")
+            print("\n🏁 Scansione terminata con successo.")
+    except Exception as e:
+        print(f"⚠️ Errore scansione: {e}")
+
 if __name__ == "__main__":
-    if not os.path.exists("database"):
-        os.makedirs("database")
-
-    print("🤖 MILLENIUM BOT IN COSTRUZIONE...")
-    
-    # Avvia il server web per Render in background
-    Thread(target=avvia_server_finto, daemon=True).start()
-    
-    # Invia la spia di controllo all'avvio
-    messaggio_avvio = (
-        "🤖 <b>MOTORE MILLENIUM ONLINE</b> 🤖\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "⚡ <i>Aggiornamento codice completato con successo.</i>\n"
-        "📊 Parametri di scansione abbassati e attivi.\n"
-        "🟢 Status: <b>LIVE</b>"
-    )
-    invia_telegram(messaggio_avvio)
-    
-    # Fissa il bot nel ciclo continuo di scansione
-    motore_scansione_live()
+    esegui_scansione_fondi(bankroll=10000)
